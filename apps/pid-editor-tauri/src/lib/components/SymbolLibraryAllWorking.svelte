@@ -133,12 +133,19 @@
     border-right: 1px solid #e5e7eb;
     display: flex;
     flex-direction: column;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12), 2px 0 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    z-index: 10;
   }
   
   .library-header {
-    padding: 1rem;
+    padding: 1.25rem 1.5rem;
     border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+    background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%);
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    position: relative;
+    z-index: 1;
   }
   
   .library-title {
@@ -151,14 +158,18 @@
   .library-header h3 {
     margin: 0;
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
+    white-space: nowrap;
+    letter-spacing: -0.025em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
   .symbol-count {
-    font-weight: 400;
-    color: #6b7280;
+    font-weight: 500;
+    color: #9ca3af;
     font-size: 0.875rem;
+    letter-spacing: 0;
   }
   
   .filters {
