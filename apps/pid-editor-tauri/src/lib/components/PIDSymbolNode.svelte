@@ -1,0 +1,426 @@
+<script lang="ts">
+  import { Handle, Position } from '@xyflow/svelte';
+  import { onMount } from 'svelte';
+  import type { NodeProps } from '@xyflow/svelte';
+  import { diagram } from '$lib/stores/diagram';
+  
+  type $$Props = NodeProps;
+  
+  export let id: $$Props['id'];
+  export let data: $$Props['data'];
+  export let selected: $$Props['selected'] = false;
+  export let dragging: $$Props['dragging'] = false;
+  
+  // Use our store to determine if selected
+  $: isSelected = $diagram.selectedIds.has(id);
+  
+  $: if (dragging) console.log('Node', id, 'is being dragged');
+  
+  // Apply visual properties
+  $: nodeColor = data.color || '#000000';
+  $: nodeOpacity = data.opacity || 1;
+  $: transformStyle = `
+    rotate(${data.rotation || 0}deg)
+    ${data.flipX ? 'scaleX(-1)' : ''}
+    ${data.flipY ? 'scaleY(-1)' : ''}
+  `;
+  
+  let svgContent = '';
+  let connectionPoints: Array<{x: number, y: number, id: string}> = [];
+  
+  // Load SVG and parse connection points
+  onMount(async () => {
+    if (data.symbolPath) {
+      try {
+        const response = await fetch(data.symbolPath);
+        const text = await response.text();
+        
+        // Parse SVG
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'image/svg+xml');
+        const svg = doc.documentElement;
+        
+        // Get viewBox
+        const viewBox = svg.getAttribute('viewBox') || '0 0 64 64';
+        const [vbX, vbY, vbWidth, vbHeight] = viewBox.split(' ').map(Number);
+        
+        // Calculate scale
+        const scaleX = data.width / vbWidth;
+        const scaleY = data.height / vbHeight;
+        
+        // Find red elements and get their positions
+        const redElements = svg.querySelectorAll('[stroke="#ff0000"], [stroke="rgb(255,0,0)"], [stroke="red"]');
+        
+        // Simple approach: find red elements and calculate centers directly
+        const rawPoints = Array.from(redElements).map((el, index) => {
+          // Get all transforms from element and parents
+          let finalX = 0, finalY = 0;
+          let currentElement = el;
+          
+          // Collect all translations
+          while (currentElement && currentElement !== svg) {
+            const transform = currentElement.getAttribute('transform') || '';
+            const translateMatch = transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
+            if (translateMatch) {
+              finalX += parseFloat(translateMatch[1]);
+              finalY += parseFloat(translateMatch[2]);
+            }
+            
+            // Add rotation center if present
+            const rotateMatch = transform.match(/rotate\(([-\d.]+)(?:\s+([-\d.]+)\s+([-\d.]+))?\)/);
+            if (rotateMatch && rotateMatch[2] && rotateMatch[3]) {
+              finalX += parseFloat(rotateMatch[2]);
+              finalY += parseFloat(rotateMatch[3]);
+            }
+            
+            currentElement = currentElement.parentElement;
+          }
+          
+          const scaledX = (finalX + 1.2) * scaleX; // Shift right by 1.2 units to align with vertical line
+          const scaledY = finalY * scaleY;
+          
+          console.log(`Red element ${index}: pos (${finalX.toFixed(2)}, ${finalY.toFixed(2)}), scaled (${scaledX.toFixed(2)}, ${scaledY.toFixed(2)})`);
+          
+          return {
+            x: scaledX,
+            y: scaledY,
+            id: `handle-${index}`
+          };
+        });
+        
+        console.log(`Found ${redElements.length} red elements total`);
+        
+        // Group nearby points (within 5 pixels) to eliminate duplicates
+        const groupedPoints: typeof rawPoints = [];
+        const threshold = 5; // pixels
+        
+        rawPoints.forEach(point => {
+          const existingPoint = groupedPoints.find(p => 
+            Math.abs(p.x - point.x) < threshold && 
+            Math.abs(p.y - point.y) < threshold
+          );
+          
+          if (!existingPoint) {
+            groupedPoints.push(point);
+          } else {
+            // Average the positions for more accuracy
+            existingPoint.x = (existingPoint.x + point.x) / 2;
+            existingPoint.y = (existingPoint.y + point.y) / 2;
+          }
+        });
+        
+        // Re-index the grouped points
+        connectionPoints = groupedPoints.map((point, index) => ({
+          ...point,
+          id: `handle-${index}`
+        }));
+        
+        console.log(`Found ${redElements.length} red elements, grouped to ${connectionPoints.length} connection points for ${data.name}`);
+        connectionPoints.forEach((point, i) => {
+          console.log(`  Point ${i}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`);
+        });
+        
+        // Hide red elements initially instead of removing them
+        redElements.forEach(el => {
+          el.setAttribute('class', 'connection-indicator');
+          el.setAttribute('opacity', '0');
+        });
+        
+        // Set the SVG content with hidden red elements
+        svgContent = new XMLSerializer().serializeToString(svg);
+      } catch (error) {
+        console.error('Failed to load SVG:', error);
+      }
+    }
+  });
+  
+  // Get handle rotation based on position
+  function getHandleRotation(point: {x: number, y: number}): number {
+    const position = getHandlePosition(point);
+    switch(position) {
+      case Position.Right: return 180;
+      case Position.Top: return 90;
+      case Position.Bottom: return -90;
+      case Position.Left:
+      default: return 0;
+    }
+  }
+  
+  // Calculate handle position as percentage with inward offset (for edge endpoint)
+  function getHandleStyle(point: {x: number, y: number}) {
+    // Get the position type to determine offset direction
+    const position = getHandlePosition(point);
+    
+    // Move handle position inward by 3 pixels to overlap with symbol
+    let offsetX = 0, offsetY = 0;
+    if (position === Position.Left) offsetX = 3;
+    else if (position === Position.Right) offsetX = -3;
+    else if (position === Position.Top) offsetY = 3;
+    else if (position === Position.Bottom) offsetY = -3;
+    
+    const adjustedX = point.x + offsetX;
+    const adjustedY = point.y + offsetY;
+    
+    const left = `${(adjustedX / data.width) * 100}%`;
+    const top = `${(adjustedY / data.height) * 100}%`;
+    return `left: ${left}; top: ${top};`;
+  }
+  
+  // Determine handle position type based on location
+  function getHandlePosition(point: {x: number, y: number}): Position {
+    const centerX = data.width / 2;
+    const centerY = data.height / 2;
+    
+    const dx = Math.abs(point.x - centerX);
+    const dy = Math.abs(point.y - centerY);
+    
+    if (dx > dy) {
+      return point.x > centerX ? Position.Right : Position.Left;
+    } else {
+      return point.y > centerY ? Position.Bottom : Position.Top;
+    }
+  }
+</script>
+
+<div 
+  class="pid-symbol-node"
+  class:selected={isSelected}
+  class:dragging
+  class:locked={data.locked}
+  style="width: {data.width}px; height: {data.height}px; transform: {transformStyle}; opacity: {nodeOpacity};"
+>
+  {#if svgContent}
+    <!-- Display the SVG symbol with color -->
+    <div class="symbol-content" style="color: {nodeColor};">
+      {@html svgContent}
+    </div>
+  {:else}
+    <!-- Fallback to image if SVG parsing fails -->
+    <img src={data.symbolPath} alt={data.name} style="filter: brightness(0) saturate(100%) {nodeColor !== '#000000' ? `drop-shadow(0 0 0 ${nodeColor})` : ''};" />
+  {/if}
+  
+  <!-- Add handles at connection points - all as source type for true bidirectional -->
+  {#each connectionPoints as point, i}
+    <!-- All handles as source type with connectionMode="loose" for bidirectional connections -->
+    <Handle
+      type="source"
+      position={getHandlePosition(point)}
+      id={`handle-${i}`}
+      style={getHandleStyle(point)}
+      class="connection-handle"
+      isConnectable={true}
+    />
+  {/each}
+  
+  <!-- Label and Tag -->
+  {#if data.showLabel !== false}
+    <div class="symbol-label">{data.name}</div>
+  {/if}
+  
+  {#if data.tag && data.showTag !== false}
+    <div class="symbol-tag tag-position-{data.tagPosition || 'below'} tag-style-{data.tagStyle || 'badge'} {data.showLabel === false && (data.tagPosition === 'below' || !data.tagPosition) ? 'no-label' : ''}">
+      {data.tag}
+    </div>
+  {/if}
+</div>
+
+<style>
+  .pid-symbol-node {
+    position: relative;
+    background: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: visible;
+  }
+  
+  .symbol-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .symbol-content :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Apply color to SVG strokes and fills */
+  .symbol-content :global(svg *) {
+    stroke: currentColor !important;
+    fill: none !important;
+  }
+  
+  .symbol-content :global(svg [fill]:not([fill="none"])) {
+    fill: currentColor !important;
+  }
+  
+  /* Stable blue glow effect for selected nodes */
+  .pid-symbol-node.selected {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 3px;
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05), transparent 70%);
+    border-radius: 4px;
+  }
+  
+  .pid-symbol-node.dragging {
+    opacity: 0.5;
+    cursor: grabbing !important;
+  }
+  
+  /* Locked element styling */
+  .pid-symbol-node.locked {
+    cursor: not-allowed !important;
+  }
+  
+  .pid-symbol-node.locked::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 10px;
+    background: white;
+    border-radius: 50%;
+    padding: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+  }
+  
+  .symbol-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .symbol-content :global(svg) {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  
+  .symbol-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #666;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: 2px;
+  }
+  
+  /* Tag base styles */
+  .symbol-tag {
+    position: absolute;
+    white-space: nowrap;
+  }
+  
+  /* Badge style (default) */
+  .symbol-tag.tag-style-badge {
+    font-size: 9px;
+    font-weight: 600;
+    color: #1e40af;
+    background: rgba(219, 234, 254, 0.95);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(147, 197, 253, 0.5);
+    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  }
+  
+  /* Simple style (like element name) */
+  .symbol-tag.tag-style-simple {
+    font-size: 10px;
+    color: #666;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-weight: normal;
+  }
+  
+  /* Tag positions */
+  .symbol-tag.tag-position-below {
+    bottom: -38px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* When label is hidden and tag is below, move tag closer to node */
+  .symbol-tag.tag-position-below.no-label {
+    bottom: -20px;
+  }
+  
+  .symbol-tag.tag-position-above {
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* When label is hidden and tag is above, it stays the same */
+  .symbol-tag.tag-position-above.no-label {
+    top: -22px;
+  }
+  
+  .symbol-tag.tag-position-left {
+    left: -10px;
+    top: 50%;
+    transform: translateX(-100%) translateY(-50%);
+  }
+  
+  .symbol-tag.tag-position-right {
+    right: -10px;
+    top: 50%;
+    transform: translateX(100%) translateY(-50%);
+  }
+  
+  /* Connection handles - invisible, just for connection logic */
+  :global(.connection-handle) {
+    width: 1px !important;
+    height: 1px !important;
+    background: transparent !important;
+    border: none !important;
+    transform: translate(-50%, -50%);
+    overflow: visible !important;
+    cursor: crosshair;
+    opacity: 0 !important;
+  }
+  
+  /* Show the actual red T-shapes from SVG on hover */
+  .symbol-content :global(.connection-indicator) {
+    transition: opacity 0.2s, stroke 0.2s;
+  }
+  
+  /* Show red T-shapes in blue when hovering over the node */
+  .pid-symbol-node:hover .symbol-content :global(.connection-indicator) {
+    opacity: 0.7 !important;
+    stroke: #3b82f6 !important;
+  }
+  
+  /* Show red T-shapes in red when hovering near them */
+  .pid-symbol-node:hover .symbol-content :global(.connection-indicator:hover) {
+    opacity: 1 !important;
+    stroke: #ff0000 !important;
+  }
+  
+  /* Override edge path to extend beyond handle center */
+  :global(.svelte-flow__edge-path) {
+    stroke-linecap: butt !important;
+  }
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+</style>

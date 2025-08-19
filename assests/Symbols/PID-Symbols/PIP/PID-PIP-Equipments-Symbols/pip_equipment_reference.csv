@@ -1,0 +1,44 @@
+Index,Filename,Description,Category
+0,pid_pip_equipment_000_tank_atmospheric_storage.svg,Tank - Atmospheric Storage,Tank
+1,pid_pip_equipment_001_tank_pressurized.svg,Tank - Pressurized,Tank
+2,pid_pip_equipment_002_tank_floating_roof.svg,Tank - Floating Roof,Tank
+3,pid_pip_equipment_003_tank_cone_roof.svg,Tank - Cone Roof,Tank
+4,pid_pip_equipment_004_vessel_vertical.svg,Vessel - Vertical,Vessel
+5,pid_pip_equipment_005_vessel_horizontal.svg,Vessel - Horizontal,Vessel
+6,pid_pip_equipment_006_vessel_spherical.svg,Vessel - Spherical,Vessel
+7,pid_pip_equipment_007_column_distillation.svg,Column - Distillation,Column
+8,pid_pip_equipment_008_column_packed.svg,Column - Packed,Column
+9,pid_pip_equipment_009_column_tray.svg,Column - Tray,Column
+10,pid_pip_equipment_010_reactor_general.svg,Reactor - General,Reactor
+11,pid_pip_equipment_011_reactor_jacketed.svg,Reactor - Jacketed,Reactor
+12,pid_pip_equipment_012_reactor_fluidized_bed.svg,Reactor - Fluidized Bed,Reactor
+13,pid_pip_equipment_013_heat_exchanger_shell_and_tube.svg,Heat Exchanger - Shell and Tube,Heat Exchanger
+14,pid_pip_equipment_014_heat_exchanger_plate.svg,Heat Exchanger - Plate,Heat Exchanger
+15,pid_pip_equipment_015_heat_exchanger_air_cooled.svg,Heat Exchanger - Air Cooled,Heat Exchanger
+16,pid_pip_equipment_016_heat_exchanger_double_pipe.svg,Heat Exchanger - Double Pipe,Heat Exchanger
+17,pid_pip_equipment_017_heater_fired.svg,Heater - Fired,Heater
+18,pid_pip_equipment_018_furnace_box_type.svg,Furnace - Box Type,Furnace
+19,pid_pip_equipment_019_boiler_package.svg,Boiler - Package,Boiler
+20,pid_pip_equipment_020_pump_centrifugal.svg,Pump - Centrifugal,Pump
+21,pid_pip_equipment_021_pump_positive_displacement.svg,Pump - Positive Displacement,Pump
+22,pid_pip_equipment_022_pump_reciprocating.svg,Pump - Reciprocating,Pump
+23,pid_pip_equipment_023_compressor_centrifugal.svg,Compressor - Centrifugal,Compressor
+24,pid_pip_equipment_024_compressor_reciprocating.svg,Compressor - Reciprocating,Compressor
+25,pid_pip_equipment_025_compressor_screw.svg,Compressor - Screw,Compressor
+26,pid_pip_equipment_026_blower_centrifugal.svg,Blower - Centrifugal,Blower
+27,pid_pip_equipment_027_fan_axial.svg,Fan - Axial,Fan
+28,pid_pip_equipment_028_filter_general.svg,Filter - General,Filter
+29,pid_pip_equipment_029_filter_bag.svg,Filter - Bag,Filter
+30,pid_pip_equipment_030_filter_cartridge.svg,Filter - Cartridge,Filter
+31,pid_pip_equipment_031_separator_gasliquid.svg,Separator - Gas/Liquid,Separator
+32,pid_pip_equipment_032_separator_cyclone.svg,Separator - Cyclone,Separator
+33,pid_pip_equipment_033_separator_centrifugal.svg,Separator - Centrifugal,Separator
+34,pid_pip_equipment_034_dryer_rotary.svg,Dryer - Rotary,Dryer
+35,pid_pip_equipment_035_dryer_spray.svg,Dryer - Spray,Dryer
+36,pid_pip_equipment_036_mixer_static.svg,Mixer - Static,Mixer
+37,pid_pip_equipment_037_mixer_agitated.svg,Mixer - Agitated,Mixer
+38,pid_pip_equipment_038_conveyor_belt.svg,Conveyor - Belt,Conveyor
+39,pid_pip_equipment_039_conveyor_screw.svg,Conveyor - Screw,Conveyor
+40,pid_pip_equipment_040_elevator_bucket.svg,Elevator - Bucket,Elevator
+41,pid_pip_equipment_041_crusher_jaw.svg,Crusher - Jaw,Crusher
+42,pid_pip_equipment_042_mill_ball.svg,Mill - Ball,Mill

@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.svelte-kit/
+.vercel/
+.netlify/
+out/
+
+# Development
+.DS_Store
+*.log
+*.local
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Tauri
+target/
+src-tauri/target/

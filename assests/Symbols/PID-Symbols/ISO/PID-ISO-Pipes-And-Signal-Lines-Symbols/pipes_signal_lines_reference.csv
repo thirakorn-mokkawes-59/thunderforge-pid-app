@@ -1,0 +1,59 @@
+Index,Filename,Description,Category
+0,pid_iso_pipes_signal_000_process_line_solid.svg,Process Line - Solid,Process Line
+1,pid_iso_pipes_signal_001_process_line_heavy.svg,Process Line - Heavy,Process Line
+2,pid_iso_pipes_signal_002_process_line_medium.svg,Process Line - Medium,Process Line
+3,pid_iso_pipes_signal_003_process_line_light.svg,Process Line - Light,Process Line
+4,pid_iso_pipes_signal_004_utility_line_air.svg,Utility Line - Air,Utility Line
+5,pid_iso_pipes_signal_005_utility_line_water.svg,Utility Line - Water,Utility Line
+6,pid_iso_pipes_signal_006_utility_line_steam.svg,Utility Line - Steam,Utility Line
+7,pid_iso_pipes_signal_007_utility_line_gas.svg,Utility Line - Gas,Utility Line
+8,pid_iso_pipes_signal_008_electrical_signal_basic.svg,Electrical Signal - Basic,Electrical Signal
+9,pid_iso_pipes_signal_009_electrical_signal_power.svg,Electrical Signal - Power,Electrical Signal
+10,pid_iso_pipes_signal_010_pneumatic_signal.svg,Pneumatic Signal,Pneumatic
+11,pid_iso_pipes_signal_011_hydraulic_signal.svg,Hydraulic Signal,Hydraulic
+12,pid_iso_pipes_signal_012_capillary_tube.svg,Capillary Tube,Capillary
+13,pid_iso_pipes_signal_013_process_line_insulated.svg,Process Line - Insulated,Process Line
+14,pid_iso_pipes_signal_014_process_line_traced.svg,Process Line - Traced,Process Line
+15,pid_iso_pipes_signal_015_process_line_jacketed.svg,Process Line - Jacketed,Process Line
+16,pid_iso_pipes_signal_016_underground_line.svg,Underground Line,Underground
+17,pid_iso_pipes_signal_017_process_line_future.svg,Process Line - Future,Process Line
+18,pid_iso_pipes_signal_018_process_line_existing.svg,Process Line - Existing,Process Line
+19,pid_iso_pipes_signal_019_software_link.svg,Software Link,Software
+20,pid_iso_pipes_signal_020_mechanical_link.svg,Mechanical Link,Mechanical
+21,pid_iso_pipes_signal_021_process_connection_socket_weld.svg,Process Connection - Socket Weld,Process Connection
+22,pid_iso_pipes_signal_022_process_connection_screwed.svg,Process Connection - Screwed,Process Connection
+23,pid_iso_pipes_signal_023_process_connection_flanged.svg,Process Connection - Flanged,Process Connection
+24,pid_iso_pipes_signal_024_process_connection_soldered.svg,Process Connection - Soldered,Process Connection
+25,pid_iso_pipes_signal_025_line_crossing_no_connection.svg,Line Crossing - No Connection,Line Crossing
+26,pid_iso_pipes_signal_026_line_crossing_connected.svg,Line Crossing - Connected,Line Crossing
+27,pid_iso_pipes_signal_027_flow_direction_right.svg,Flow Direction - Right,Flow Direction
+28,pid_iso_pipes_signal_028_flow_direction_left.svg,Flow Direction - Left,Flow Direction
+29,pid_iso_pipes_signal_029_flow_direction_up.svg,Flow Direction - Up,Flow Direction
+30,pid_iso_pipes_signal_030_flow_direction_down.svg,Flow Direction - Down,Flow Direction
+31,pid_iso_pipes_signal_031_flow_direction_bidirectional.svg,Flow Direction - Bidirectional,Flow Direction
+32,pid_iso_pipes_signal_032_signal_line_dashed.svg,Signal Line - Dashed,Signal Line
+33,pid_iso_pipes_signal_033_signal_line_dotted.svg,Signal Line - Dotted,Signal Line
+34,pid_iso_pipes_signal_034_signal_line_chain.svg,Signal Line - Chain,Signal Line
+35,pid_iso_pipes_signal_035_signal_line_double.svg,Signal Line - Double,Signal Line
+36,pid_iso_pipes_signal_036_process_line_primary.svg,Process Line - Primary,Process Line
+37,pid_iso_pipes_signal_037_process_line_secondary.svg,Process Line - Secondary,Process Line
+38,pid_iso_pipes_signal_038_process_line_tertiary.svg,Process Line - Tertiary,Process Line
+39,pid_iso_pipes_signal_039_instrument_air_line.svg,Instrument Air Line,Instrument
+40,pid_iso_pipes_signal_040_nitrogen_line.svg,Nitrogen Line,Nitrogen
+41,pid_iso_pipes_signal_041_vacuum_line.svg,Vacuum Line,Vacuum
+42,pid_iso_pipes_signal_042_drain_line.svg,Drain Line,Drain
+43,pid_iso_pipes_signal_043_vent_line.svg,Vent Line,Vent
+44,pid_iso_pipes_signal_044_sample_line.svg,Sample Line,Sample
+45,pid_iso_pipes_signal_045_process_line_hazardous.svg,Process Line - Hazardous,Process Line
+46,pid_iso_pipes_signal_046_process_line_non_hazardous.svg,Process Line - Non-Hazardous,Process Line
+47,pid_iso_pipes_signal_047_cooling_water_supply.svg,Cooling Water Supply,Cooling
+48,pid_iso_pipes_signal_048_cooling_water_return.svg,Cooling Water Return,Cooling
+49,pid_iso_pipes_signal_049_steam_supply.svg,Steam Supply,Steam
+50,pid_iso_pipes_signal_050_steam_condensate.svg,Steam Condensate,Steam
+51,pid_iso_pipes_signal_051_fire_protection_line.svg,Fire Protection Line,Fire
+52,pid_iso_pipes_signal_052_process_line_sloped.svg,Process Line - Sloped,Process Line
+53,pid_iso_pipes_signal_053_process_line_vertical.svg,Process Line - Vertical,Process Line
+54,pid_iso_pipes_signal_054_process_line_horizontal.svg,Process Line - Horizontal,Process Line
+55,pid_iso_pipes_signal_055_signal_line_binary.svg,Signal Line - Binary,Signal Line
+56,pid_iso_pipes_signal_056_signal_line_analog.svg,Signal Line - Analog,Signal Line
+57,pid_iso_pipes_signal_057_signal_line_digital.svg,Signal Line - Digital,Signal Line

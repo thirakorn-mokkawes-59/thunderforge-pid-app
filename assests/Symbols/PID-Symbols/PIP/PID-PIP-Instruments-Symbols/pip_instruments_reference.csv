@@ -1,0 +1,49 @@
+Index,Filename,Description,Category
+0,pid_pip_instruments_000_pressure_indicator_local.svg,Pressure Indicator - Local,Pressure Indicator
+1,pid_pip_instruments_001_pressure_indicator_remote.svg,Pressure Indicator - Remote,Pressure Indicator
+2,pid_pip_instruments_002_pressure_transmitter.svg,Pressure Transmitter,Pressure
+3,pid_pip_instruments_003_pressure_controller.svg,Pressure Controller,Pressure
+4,pid_pip_instruments_004_pressure_switch.svg,Pressure Switch,Pressure
+5,pid_pip_instruments_005_pressure_gauge.svg,Pressure Gauge,Pressure
+6,pid_pip_instruments_006_temperature_indicator_local.svg,Temperature Indicator - Local,Temperature Indicator
+7,pid_pip_instruments_007_temperature_indicator_remote.svg,Temperature Indicator - Remote,Temperature Indicator
+8,pid_pip_instruments_008_temperature_transmitter.svg,Temperature Transmitter,Temperature
+9,pid_pip_instruments_009_temperature_controller.svg,Temperature Controller,Temperature
+10,pid_pip_instruments_010_temperature_element.svg,Temperature Element,Temperature
+11,pid_pip_instruments_011_temperature_well.svg,Temperature Well,Temperature
+12,pid_pip_instruments_012_level_indicator_local.svg,Level Indicator - Local,Level Indicator
+13,pid_pip_instruments_013_level_indicator_remote.svg,Level Indicator - Remote,Level Indicator
+14,pid_pip_instruments_014_level_transmitter.svg,Level Transmitter,Level
+15,pid_pip_instruments_015_level_controller.svg,Level Controller,Level
+16,pid_pip_instruments_016_level_switch.svg,Level Switch,Level
+17,pid_pip_instruments_017_level_gauge_glass.svg,Level Gauge Glass,Level
+18,pid_pip_instruments_018_flow_indicator_local.svg,Flow Indicator - Local,Flow Indicator
+19,pid_pip_instruments_019_flow_indicator_remote.svg,Flow Indicator - Remote,Flow Indicator
+20,pid_pip_instruments_020_flow_transmitter.svg,Flow Transmitter,Flow
+21,pid_pip_instruments_021_flow_controller.svg,Flow Controller,Flow
+22,pid_pip_instruments_022_flow_element_orifice.svg,Flow Element - Orifice,Flow Element
+23,pid_pip_instruments_023_flow_element_venturi.svg,Flow Element - Venturi,Flow Element
+24,pid_pip_instruments_024_flow_totalizer.svg,Flow Totalizer,Flow
+25,pid_pip_instruments_025_control_valve_general.svg,Control Valve - General,Control Valve
+26,pid_pip_instruments_026_control_valve_globe.svg,Control Valve - Globe,Control Valve
+27,pid_pip_instruments_027_control_valve_butterfly.svg,Control Valve - Butterfly,Control Valve
+28,pid_pip_instruments_028_control_valve_ball.svg,Control Valve - Ball,Control Valve
+29,pid_pip_instruments_029_control_valve_three_way.svg,Control Valve - Three Way,Control Valve
+30,pid_pip_instruments_030_analyzer_general.svg,Analyzer - General,Analyzer
+31,pid_pip_instruments_031_analyzer_ph.svg,Analyzer - pH,Analyzer
+32,pid_pip_instruments_032_analyzer_oxygen.svg,Analyzer - Oxygen,Analyzer
+33,pid_pip_instruments_033_analyzer_conductivity.svg,Analyzer - Conductivity,Analyzer
+34,pid_pip_instruments_034_analyzer_density.svg,Analyzer - Density,Analyzer
+35,pid_pip_instruments_035_recorder_general.svg,Recorder - General,Recorder
+36,pid_pip_instruments_036_recorder_multi_point.svg,Recorder - Multi Point,Recorder
+37,pid_pip_instruments_037_indicator_general.svg,Indicator - General,Indicator
+38,pid_pip_instruments_038_controller_general.svg,Controller - General,Controller
+39,pid_pip_instruments_039_hand_switch.svg,Hand Switch,Hand
+40,pid_pip_instruments_040_solenoid_valve.svg,Solenoid Valve,Valve
+41,pid_pip_instruments_041_safety_valve_spring.svg,Safety Valve - Spring,Safety Valve
+42,pid_pip_instruments_042_safety_valve_pilot.svg,Safety Valve - Pilot,Safety Valve
+43,pid_pip_instruments_043_rupture_disk.svg,Rupture Disk,Rupture
+44,pid_pip_instruments_044_alarm_general.svg,Alarm - General,Alarm
+45,pid_pip_instruments_045_alarm_high.svg,Alarm - High,Alarm
+46,pid_pip_instruments_046_alarm_low.svg,Alarm - Low,Alarm
+47,pid_pip_instruments_047_interlock.svg,Interlock,Interlock
