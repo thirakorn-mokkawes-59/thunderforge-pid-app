@@ -2,12 +2,16 @@
   import { diagram } from '$lib/stores/diagram';
   import type { DiagramElement } from '$lib/types/diagram';
   import { fade, slide } from 'svelte/transition';
-  import { Trash2, Wrench } from 'lucide-svelte';
+  import { Trash2, Wrench, Check } from 'lucide-svelte';
   
   let selectedElement: DiagramElement | null = null;
   let symbolStandard: string = 'PID';
   let activeTab: 'properties' | 'style' | 'transform' | 'layers' = 'properties';
   let showColorPicker = false;
+  let showLabelColorPicker = false;
+  let showLabelBgPicker = false;
+  let showTagColorPicker = false;
+  let showTagBgPicker = false;
   let recentColors: string[] = [];
   
   // Preset colors - more refined palette
@@ -277,6 +281,225 @@
               </label>
             </div>
             
+            <!-- Label Text Styling -->
+            <div class="control-section">
+              <div class="section-header">
+                <span class="section-title">Label Style</span>
+              </div>
+              
+              <!-- Label Font Size -->
+              <div class="text-control-row">
+                <span class="text-control-label">Size</span>
+                <div class="font-size-controls">
+                  <button 
+                    class="text-size-btn"
+                    class:active={selectedElement.labelFontSize === 8}
+                    on:click={() => updateProperty('labelFontSize', 8)}
+                    title="Extra Small"
+                  >
+                    XS
+                  </button>
+                  <button 
+                    class="text-size-btn"
+                    class:active={selectedElement.labelFontSize === 10 || !selectedElement.labelFontSize}
+                    on:click={() => updateProperty('labelFontSize', 10)}
+                    title="Small"
+                  >
+                    S
+                  </button>
+                  <button 
+                    class="text-size-btn"
+                    class:active={selectedElement.labelFontSize === 12}
+                    on:click={() => updateProperty('labelFontSize', 12)}
+                    title="Medium"
+                  >
+                    M
+                  </button>
+                  <button 
+                    class="text-size-btn"
+                    class:active={selectedElement.labelFontSize === 14}
+                    on:click={() => updateProperty('labelFontSize', 14)}
+                    title="Large"
+                  >
+                    L
+                  </button>
+                  <button 
+                    class="text-size-btn"
+                    class:active={selectedElement.labelFontSize === 16}
+                    on:click={() => updateProperty('labelFontSize', 16)}
+                    title="Extra Large"
+                  >
+                    XL
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Label Font Style -->
+              <div class="text-control-row">
+                <span class="text-control-label">Style</span>
+                <div class="font-style-controls">
+                  <button 
+                    class="text-style-btn"
+                    class:active={selectedElement.labelFontWeight === 'bold'}
+                    on:click={() => updateProperty('labelFontWeight', selectedElement.labelFontWeight === 'bold' ? 'normal' : 'bold')}
+                    title="Bold"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                      <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                    </svg>
+                  </button>
+                  <button 
+                    class="text-style-btn"
+                    class:active={selectedElement.labelFontStyle === 'italic'}
+                    on:click={() => updateProperty('labelFontStyle', selectedElement.labelFontStyle === 'italic' ? 'normal' : 'italic')}
+                    title="Italic"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="19" y1="4" x2="10" y2="4"></line>
+                      <line x1="14" y1="20" x2="5" y2="20"></line>
+                      <line x1="15" y1="4" x2="9" y2="20"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Label Font Color -->
+              <div class="text-control-row">
+                <span class="text-control-label">Color</span>
+                <div class="font-color-controls">
+                  <button
+                    class="color-btn"
+                    style="background-color: {selectedElement.labelFontColor || '#666666'}"
+                    on:click={() => showLabelColorPicker = !showLabelColorPicker}
+                    title="Label Color"
+                  ></button>
+                  <div class="color-presets">
+                    <button
+                      class="color-btn"
+                      style="background-color: #000000"
+                      on:click={() => updateProperty('labelFontColor', '#000000')}
+                      title="Black"
+                    ></button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #666666"
+                      on:click={() => updateProperty('labelFontColor', '#666666')}
+                      title="Gray"
+                    ></button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #1e40af"
+                      on:click={() => updateProperty('labelFontColor', '#1e40af')}
+                      title="Blue"
+                    ></button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #dc2626"
+                      on:click={() => updateProperty('labelFontColor', '#dc2626')}
+                      title="Red"
+                    ></button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #16a34a"
+                      on:click={() => updateProperty('labelFontColor', '#16a34a')}
+                      title="Green"
+                    ></button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Label Background -->
+              <div class="text-control-row">
+                <span class="text-control-label">BG</span>
+                <div class="font-color-controls">
+                  <div class="color-presets">
+                    <button
+                      class="bg-color-btn no-bg"
+                      on:click={() => updateProperty('labelBgColor', 'transparent')}
+                      title="No Background"
+                    >
+                      {#if selectedElement.labelBgColor === 'transparent'}
+                        <Check size={16} color="#000000" />
+                      {/if}
+                    </button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #ffffff"
+                      on:click={() => updateProperty('labelBgColor', '#ffffff')}
+                      title="White"
+                    >
+                      {#if selectedElement.labelBgColor === '#ffffff'}
+                        <Check size={16} color="#000000" />
+                      {/if}
+                    </button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #f3f4f6"
+                      on:click={() => updateProperty('labelBgColor', '#f3f4f6')}
+                      title="Light Gray"
+                    >
+                      {#if selectedElement.labelBgColor === '#f3f4f6'}
+                        <Check size={16} color="#000000" />
+                      {/if}
+                    </button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #fef3c7"
+                      on:click={() => updateProperty('labelBgColor', '#fef3c7')}
+                      title="Light Yellow"
+                    >
+                      {#if selectedElement.labelBgColor === '#fef3c7'}
+                        <Check size={16} color="#000000" />
+                      {/if}
+                    </button>
+                    <button
+                      class="color-btn"
+                      style="background-color: #dbeafe"
+                      on:click={() => updateProperty('labelBgColor', '#dbeafe')}
+                      title="Light Blue"
+                    >
+                      {#if selectedElement.labelBgColor === '#dbeafe'}
+                        <Check size={16} color="#000000" />
+                      {/if}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {#if showLabelColorPicker}
+                <div class="color-grid" in:slide={{duration: 200}}>
+                  {#each colorPalette as color}
+                    <button
+                      class="color-grid-btn"
+                      style="background-color: {color}"
+                      on:click={() => {
+                        updateProperty('labelFontColor', color);
+                        showLabelColorPicker = false;
+                      }}
+                      title={color}
+                    ></button>
+                  {/each}
+                </div>
+              {/if}
+              
+              {#if showLabelBgPicker}
+                <div class="color-grid" in:slide={{duration: 200}}>
+                  {#each colorPalette as color}
+                    <button
+                      class="color-grid-btn"
+                      style="background-color: {color}"
+                      on:click={() => {
+                        updateProperty('labelBgColor', color);
+                        showLabelBgPicker = false;
+                      }}
+                      title={color}
+                    ></button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+            
             <div class="input-group">
               <label>
                 <span class="label-text">Tag Number</span>
@@ -289,37 +512,226 @@
               </label>
             </div>
             
-            <div class="input-group {!selectedElement.tag ? 'disabled' : ''}">
-              <span class="label-text">Tag Style</span>
-              <div class="tag-style-buttons">
-                <button 
-                  class="style-option-btn"
-                  class:active={!selectedElement.tagStyle || selectedElement.tagStyle === 'badge'}
-                  on:click={() => selectedElement.tag && updateProperty('tagStyle', 'badge')}
-                  disabled={!selectedElement.tag}
-                  title="Badge Style"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="9" width="18" height="6" rx="3"/>
-                    <text x="12" y="13" text-anchor="middle" font-size="8" fill="currentColor">TAG</text>
-                  </svg>
-                  Badge
-                </button>
-                <button 
-                  class="style-option-btn"
-                  class:active={selectedElement.tagStyle === 'simple'}
-                  on:click={() => selectedElement.tag && updateProperty('tagStyle', 'simple')}
-                  disabled={!selectedElement.tag}
-                  title="Simple Text"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="4" y1="12" x2="20" y2="12"/>
-                    <text x="12" y="11" text-anchor="middle" font-size="10" fill="currentColor">Aa</text>
-                  </svg>
-                  Simple
-                </button>
+            <!-- Tag Text Styling -->
+            {#if selectedElement.tag}
+              <div class="control-section">
+                <div class="section-header">
+                  <span class="section-title">Tag Style</span>
+                </div>
+                
+                <!-- Tag Font Size -->
+                <div class="text-control-row">
+                  <span class="text-control-label">Size</span>
+                  <div class="font-size-controls">
+                    <button 
+                      class="text-size-btn"
+                      class:active={selectedElement.tagFontSize === 8}
+                      on:click={() => updateProperty('tagFontSize', 8)}
+                      title="Extra Small"
+                    >
+                      XS
+                    </button>
+                    <button 
+                      class="text-size-btn"
+                      class:active={selectedElement.tagFontSize === 9}
+                      on:click={() => updateProperty('tagFontSize', 9)}
+                      title="Small"
+                    >
+                      S
+                    </button>
+                    <button 
+                      class="text-size-btn"
+                      class:active={selectedElement.tagFontSize === 10 || !selectedElement.tagFontSize}
+                      on:click={() => updateProperty('tagFontSize', 10)}
+                      title="Medium"
+                    >
+                      M
+                    </button>
+                    <button 
+                      class="text-size-btn"
+                      class:active={selectedElement.tagFontSize === 12}
+                      on:click={() => updateProperty('tagFontSize', 12)}
+                      title="Large"
+                    >
+                      L
+                    </button>
+                    <button 
+                      class="text-size-btn"
+                      class:active={selectedElement.tagFontSize === 14}
+                      on:click={() => updateProperty('tagFontSize', 14)}
+                      title="Extra Large"
+                    >
+                      XL
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Tag Font Style -->
+                <div class="text-control-row">
+                  <span class="text-control-label">Style</span>
+                  <div class="font-style-controls">
+                    <button 
+                      class="text-style-btn"
+                      class:active={selectedElement.tagFontWeight === 'bold'}
+                      on:click={() => updateProperty('tagFontWeight', selectedElement.tagFontWeight === 'bold' ? 'normal' : 'bold')}
+                      title="Bold"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                        <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                      </svg>
+                    </button>
+                    <button 
+                      class="text-style-btn"
+                      class:active={selectedElement.tagFontStyle === 'italic'}
+                      on:click={() => updateProperty('tagFontStyle', selectedElement.tagFontStyle === 'italic' ? 'normal' : 'italic')}
+                      title="Italic"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="4" x2="10" y2="4"></line>
+                        <line x1="14" y1="20" x2="5" y2="20"></line>
+                        <line x1="15" y1="4" x2="9" y2="20"></line>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Tag Font Color -->
+                <div class="text-control-row">
+                  <span class="text-control-label">Color</span>
+                  <div class="font-color-controls">
+                    <button
+                      class="color-btn"
+                      style="background-color: {selectedElement.tagFontColor || '#666666'}"
+                      on:click={() => showTagColorPicker = !showTagColorPicker}
+                      title="Tag Color"
+                    ></button>
+                    <div class="color-presets">
+                      <button
+                        class="color-btn"
+                        style="background-color: #000000"
+                        on:click={() => updateProperty('tagFontColor', '#000000')}
+                        title="Black"
+                      ></button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #666666"
+                        on:click={() => updateProperty('tagFontColor', '#666666')}
+                        title="Gray"
+                      ></button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #1e40af"
+                        on:click={() => updateProperty('tagFontColor', '#1e40af')}
+                        title="Blue"
+                      ></button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #dc2626"
+                        on:click={() => updateProperty('tagFontColor', '#dc2626')}
+                        title="Red"
+                      ></button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #16a34a"
+                        on:click={() => updateProperty('tagFontColor', '#16a34a')}
+                        title="Green"
+                      ></button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Tag Background -->
+                <div class="text-control-row">
+                  <span class="text-control-label">BG</span>
+                  <div class="font-color-controls">
+                    <div class="color-presets">
+                      <button
+                        class="bg-color-btn no-bg"
+                        on:click={() => updateProperty('tagBgColor', 'transparent')}
+                        title="No Background"
+                      >
+                        {#if selectedElement.tagBgColor === 'transparent'}
+                          <Check size={16} color="#000000" />
+                        {/if}
+                      </button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #ffffff"
+                        on:click={() => updateProperty('tagBgColor', '#ffffff')}
+                        title="White"
+                      >
+                        {#if selectedElement.tagBgColor === '#ffffff'}
+                          <Check size={16} color="#000000" />
+                        {/if}
+                      </button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #f3f4f6"
+                        on:click={() => updateProperty('tagBgColor', '#f3f4f6')}
+                        title="Light Gray"
+                      >
+                        {#if selectedElement.tagBgColor === '#f3f4f6'}
+                          <Check size={16} color="#000000" />
+                        {/if}
+                      </button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #fef3c7"
+                        on:click={() => updateProperty('tagBgColor', '#fef3c7')}
+                        title="Light Yellow"
+                      >
+                        {#if selectedElement.tagBgColor === '#fef3c7'}
+                          <Check size={16} color="#000000" />
+                        {/if}
+                      </button>
+                      <button
+                        class="color-btn"
+                        style="background-color: #dbeafe"
+                        on:click={() => updateProperty('tagBgColor', '#dbeafe')}
+                        title="Light Blue"
+                      >
+                        {#if selectedElement.tagBgColor === '#dbeafe'}
+                          <Check size={16} color="#000000" />
+                        {/if}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {#if showTagColorPicker}
+                  <div class="color-grid" in:slide={{duration: 200}}>
+                    {#each colorPalette as color}
+                      <button
+                        class="color-grid-btn"
+                        style="background-color: {color}"
+                        on:click={() => {
+                          updateProperty('tagFontColor', color);
+                          showTagColorPicker = false;
+                        }}
+                        title={color}
+                      ></button>
+                    {/each}
+                  </div>
+                {/if}
+                
+                {#if showTagBgPicker}
+                  <div class="color-grid" in:slide={{duration: 200}}>
+                    {#each colorPalette as color}
+                      <button
+                        class="color-grid-btn"
+                        style="background-color: {color}"
+                        on:click={() => {
+                          updateProperty('tagBgColor', color);
+                          showTagBgPicker = false;
+                        }}
+                        title={color}
+                      ></button>
+                    {/each}
+                  </div>
+                {/if}
               </div>
-            </div>
+            {/if}
             
             <div class="input-group {!selectedElement.tag ? 'disabled' : ''}">
               <span class="label-text">Tag Position</span>
@@ -584,11 +996,42 @@
               />
             </div>
             
-            <!-- Stroke Width Control -->
+            <!-- Line Weight Control -->
             <div class="control-section">
               <div class="section-header">
                 <span class="section-title">Line Weight</span>
-                <span class="section-value">{selectedElement.strokeWidth || 0.5}px</span>
+                <span class="section-value">{(selectedElement.strokeWidth || 0.5).toFixed(1)}px</span>
+              </div>
+              
+              <div class="size-presets">
+                <button 
+                  class="preset-btn"
+                  class:active={selectedElement.strokeWidth === 0.5 || !selectedElement.strokeWidth}
+                  on:click={() => updateProperty('strokeWidth', 0.5)}
+                >
+                  Thin
+                </button>
+                <button 
+                  class="preset-btn"
+                  class:active={selectedElement.strokeWidth === 1}
+                  on:click={() => updateProperty('strokeWidth', 1)}
+                >
+                  Normal
+                </button>
+                <button 
+                  class="preset-btn"
+                  class:active={selectedElement.strokeWidth === 2}
+                  on:click={() => updateProperty('strokeWidth', 2)}
+                >
+                  Bold
+                </button>
+                <button 
+                  class="preset-btn"
+                  class:active={selectedElement.strokeWidth === 3}
+                  on:click={() => updateProperty('strokeWidth', 3)}
+                >
+                  Heavy
+                </button>
               </div>
               
               <input 
@@ -600,37 +1043,6 @@
                 value={selectedElement.strokeWidth || 0.5}
                 on:input={(e) => updateProperty('strokeWidth', parseFloat(e.currentTarget.value))}
               />
-              
-              <div class="stroke-presets">
-                <button 
-                  class="preset-btn small"
-                  class:active={selectedElement.strokeWidth === 0.5 || !selectedElement.strokeWidth}
-                  on:click={() => updateProperty('strokeWidth', 0.5)}
-                >
-                  Thin
-                </button>
-                <button 
-                  class="preset-btn small"
-                  class:active={selectedElement.strokeWidth === 1}
-                  on:click={() => updateProperty('strokeWidth', 1)}
-                >
-                  Normal
-                </button>
-                <button 
-                  class="preset-btn small"
-                  class:active={selectedElement.strokeWidth === 2}
-                  on:click={() => updateProperty('strokeWidth', 2)}
-                >
-                  Bold
-                </button>
-                <button 
-                  class="preset-btn small"
-                  class:active={selectedElement.strokeWidth === 3}
-                  on:click={() => updateProperty('strokeWidth', 3)}
-                >
-                  Heavy
-                </button>
-              </div>
             </div>
             
             <!-- Line Cap Style Control -->
@@ -641,26 +1053,24 @@
               
               <div class="linecap-options">
                 <button 
-                  class="style-option-btn"
+                  class="linecap-btn"
                   class:active={!selectedElement.strokeLinecap || selectedElement.strokeLinecap === 'butt'}
                   on:click={() => updateProperty('strokeLinecap', 'butt')}
                   title="Flat line endings"
                 >
-                  <svg width="40" height="20" viewBox="0 0 40 20">
-                    <line x1="5" y1="10" x2="35" y2="10" stroke="currentColor" stroke-width="3" stroke-linecap="butt"/>
+                  <svg width="40" height="24" viewBox="0 0 40 24">
+                    <line x1="10" y1="12" x2="30" y2="12" stroke="currentColor" stroke-width="10" stroke-linecap="butt"/>
                   </svg>
-                  <span>Flat</span>
                 </button>
                 <button 
-                  class="style-option-btn"
+                  class="linecap-btn"
                   class:active={selectedElement.strokeLinecap === 'round'}
                   on:click={() => updateProperty('strokeLinecap', 'round')}
                   title="Rounded line endings"
                 >
-                  <svg width="40" height="20" viewBox="0 0 40 20">
-                    <line x1="5" y1="10" x2="35" y2="10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                  <svg width="40" height="24" viewBox="0 0 40 24">
+                    <line x1="10" y1="12" x2="30" y2="12" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
                   </svg>
-                  <span>Round</span>
                 </button>
               </div>
             </div>
@@ -1446,20 +1856,160 @@
     transform: translateY(-1px) scale(1.05);
   }
   
-  .stroke-presets {
+  
+  /* Text Styling Controls */
+  .text-control-row {
     display: flex;
-    gap: 0.25rem;
-    margin-top: 0.5rem;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
   }
   
+  .text-control-label {
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    color: #6b7280;
+    min-width: 3rem;
+  }
+  
+  .font-size-controls {
+    display: flex;
+    gap: 0.25rem;
+    flex: 1;
+  }
+  
+  .text-size-btn {
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: var(--text-xs);
+    font-weight: var(--font-bold);
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .text-size-btn:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #9ca3af;
+    color: #374151;
+  }
+  
+  .text-size-btn.active {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-color: #6366f1;
+    color: white;
+  }
+  
+  .font-style-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .text-style-btn {
+    padding: 0.375rem 0.625rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .text-style-btn:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #9ca3af;
+  }
+  
+  .text-style-btn.active {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-color: #6366f1;
+  }
+  
+  .text-style-btn.active svg {
+    filter: brightness(0) invert(1);
+  }
+  
+  .font-color-controls {
+    display: flex;
+    gap: 0.375rem;
+    flex: 1;
+  }
+  
+  .bg-color-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .bg-color-btn.no-bg {
+    background: repeating-linear-gradient(
+      45deg,
+      #fff,
+      #fff 3px,
+      #e5e7eb 3px,
+      #e5e7eb 6px
+    );
+  }
+  
+  .bg-color-btn.no-bg svg {
+    stroke: #6b7280;
+    stroke-width: 2;
+  }
+  
+  .bg-color-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Line Cap Options */
   .linecap-options {
     display: flex;
     gap: 0.5rem;
   }
   
-  .preset-btn.small {
-    padding: 0.25rem 0.5rem;
-    font-size: var(--text-xs);
+  .linecap-btn {
+    flex: 1;
+    padding: 0.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .linecap-btn:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #9ca3af;
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .linecap-btn.active {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-color: #6366f1;
+    box-shadow: 0 3px 8px rgba(99, 102, 241, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px) scale(1.02);
+  }
+  
+  .linecap-btn.active svg {
+    filter: brightness(0) invert(1);
   }
   
   /* Color Controls */

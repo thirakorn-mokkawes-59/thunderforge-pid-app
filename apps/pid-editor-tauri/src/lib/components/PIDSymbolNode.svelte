@@ -295,11 +295,25 @@
   
   <!-- Label and Tag -->
   {#if data.showLabel !== false}
-    <div class="symbol-label">{data.name}</div>
+    <div class="symbol-label" style="
+      font-size: {data.labelFontSize || 10}px;
+      font-weight: {data.labelFontWeight || 'normal'};
+      font-style: {data.labelFontStyle || 'normal'};
+      color: {data.labelFontColor || '#666666'};
+      background: {data.labelBgColor === 'transparent' ? 'transparent' : (data.labelBgColor || 'rgba(255, 255, 255, 0.9)')};
+      padding: 2px 4px;
+    ">{data.name}</div>
   {/if}
   
   {#if data.tag && data.showTag !== false}
-    <div class="symbol-tag tag-position-{data.tagPosition || 'below'} tag-style-{data.tagStyle || 'badge'} {data.showLabel === false && (data.tagPosition === 'below' || !data.tagPosition) ? 'no-label' : ''}">
+    <div class="symbol-tag tag-position-{data.tagPosition || 'below'} {data.showLabel === false && (data.tagPosition === 'below' || !data.tagPosition) ? 'no-label' : ''}" style="
+      font-size: {data.tagFontSize || 10}px;
+      font-weight: {data.tagFontWeight || 'normal'};
+      font-style: {data.tagFontStyle || 'normal'};
+      color: {data.tagFontColor || '#666666'};
+      background: {data.tagBgColor === 'transparent' ? 'transparent' : (data.tagBgColor || 'rgba(255, 255, 255, 0.9)')};
+      padding: 2px 4px;
+    ">
       {data.tag}
     </div>
   {/if}
@@ -416,40 +430,15 @@
     bottom: -20px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 10px;
-    color: #666;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2px 4px;
     border-radius: 2px;
   }
   
-  /* Tag base styles */
+  /* Tag styles - simple only */
   .symbol-tag {
     position: absolute;
     white-space: nowrap;
-  }
-  
-  /* Badge style (default) */
-  .symbol-tag.tag-style-badge {
-    font-size: 9px;
-    font-weight: 600;
-    color: #1e40af;
-    background: rgba(219, 234, 254, 0.95);
-    padding: 2px 6px;
-    border-radius: 3px;
-    border: 1px solid rgba(147, 197, 253, 0.5);
-    font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-  }
-  
-  /* Simple style (like element name) */
-  .symbol-tag.tag-style-simple {
-    font-size: 10px;
-    color: #666;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2px 4px;
     border-radius: 2px;
-    font-weight: normal;
   }
   
   /* Tag positions */
