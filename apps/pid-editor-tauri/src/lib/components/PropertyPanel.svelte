@@ -498,6 +498,63 @@
                   {/each}
                 </div>
               {/if}
+              
+              <!-- Label Position -->
+              <div class="text-control-row">
+                <span class="text-control-label">Position</span>
+                <div class="position-controls">
+                  <button
+                    class="position-arrow-btn"
+                    on:click={() => updateProperty('labelOffsetY', (selectedElement.labelOffsetY || 0) - 5)}
+                    title="Move Up"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="18 15 12 9 6 15"></polyline>
+                    </svg>
+                  </button>
+                  <div class="position-center-group">
+                    <button
+                      class="position-arrow-btn"
+                      on:click={() => updateProperty('labelOffsetX', (selectedElement.labelOffsetX || 0) - 5)}
+                      title="Move Left"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                      </svg>
+                    </button>
+                    <button
+                      class="position-reset-btn"
+                      on:click={() => {
+                        updateProperty('labelOffsetX', 0);
+                        updateProperty('labelOffsetY', 0);
+                      }}
+                      title="Reset Position"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                    <button
+                      class="position-arrow-btn"
+                      on:click={() => updateProperty('labelOffsetX', (selectedElement.labelOffsetX || 0) + 5)}
+                      title="Move Right"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                  <button
+                    class="position-arrow-btn"
+                    on:click={() => updateProperty('labelOffsetY', (selectedElement.labelOffsetY || 0) + 5)}
+                    title="Move Down"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
             
             <div class="input-group">
@@ -730,6 +787,63 @@
                     {/each}
                   </div>
                 {/if}
+                
+                <!-- Tag Position -->
+                <div class="text-control-row">
+                  <span class="text-control-label">Position</span>
+                  <div class="position-controls">
+                    <button
+                      class="position-arrow-btn"
+                      on:click={() => updateProperty('tagOffsetY', (selectedElement.tagOffsetY || 0) - 5)}
+                      title="Move Up"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="18 15 12 9 6 15"></polyline>
+                      </svg>
+                    </button>
+                    <div class="position-center-group">
+                      <button
+                        class="position-arrow-btn"
+                        on:click={() => updateProperty('tagOffsetX', (selectedElement.tagOffsetX || 0) - 5)}
+                        title="Move Left"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                      </button>
+                      <button
+                        class="position-reset-btn"
+                        on:click={() => {
+                          updateProperty('tagOffsetX', 0);
+                          updateProperty('tagOffsetY', 0);
+                        }}
+                        title="Reset Position"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                      <button
+                        class="position-arrow-btn"
+                        on:click={() => updateProperty('tagOffsetX', (selectedElement.tagOffsetX || 0) + 5)}
+                        title="Move Right"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      class="position-arrow-btn"
+                      on:click={() => updateProperty('tagOffsetY', (selectedElement.tagOffsetY || 0) + 5)}
+                      title="Move Down"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
             {/if}
             
@@ -2327,5 +2441,70 @@
   
   .tab-content-wrapper::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+  
+  /* Label Position Controls */
+  .position-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+  }
+  
+  .position-center-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .position-arrow-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #6b7280;
+  }
+  
+  .position-arrow-btn:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #9ca3af;
+    color: #374151;
+    transform: scale(1.05);
+  }
+  
+  .position-arrow-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .position-reset-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #6b7280;
+  }
+  
+  .position-reset-btn:hover {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-color: #3b82f6;
+    color: #1e40af;
+    transform: scale(1.1);
+  }
+  
+  .position-reset-btn:active {
+    transform: scale(0.95);
   }
 </style>

@@ -99,11 +99,15 @@
             labelFontStyle: element.labelFontStyle || 'normal',
             labelFontColor: element.labelFontColor || '#666666',
             labelBgColor: element.labelBgColor || 'rgba(255, 255, 255, 0.9)',
+            labelOffsetX: element.labelOffsetX || 0,
+            labelOffsetY: element.labelOffsetY || 0,
             tagFontSize: element.tagFontSize || 10,
             tagFontWeight: element.tagFontWeight || 'normal',
             tagFontStyle: element.tagFontStyle || 'normal',
             tagFontColor: element.tagFontColor || '#666666',
             tagBgColor: element.tagBgColor || 'rgba(255, 255, 255, 0.9)',
+            tagOffsetX: element.tagOffsetX || 0,
+            tagOffsetY: element.tagOffsetY || 0,
             flipX: element.flipX,
             flipY: element.flipY,
             locked: element.locked,
@@ -286,6 +290,14 @@
       const nodeId = event.node.id;      if (nodeId) {
         diagram.selectElement(nodeId);
       }
+    }
+  }
+  
+  // Handle clicking on empty canvas to deselect
+  function handlePaneClick(event: any) {
+    // Only deselect if not locked and not dragging/connecting
+    if (!nodesLocked && !creatingConnection) {
+      diagram.deselectAll();
     }
   }
 
@@ -556,7 +568,14 @@
   // Store the flow instance when it's ready
   function onInit() {
     const flow = useSvelteFlow();
-    flowInstance = flow;  }
+    flowInstance = flow;
+    // Fit view on initial load after a short delay to ensure nodes are rendered
+    setTimeout(() => {
+      if (flowInstance && nodes.length > 0) {
+        flowInstance.fitView({ padding: 0.1 });
+      }
+    }, 100);
+  }
   
   // Handle position updates from property panel
   function handleNodePositionUpdate(event: CustomEvent) {
@@ -667,6 +686,7 @@
     }}
     onnodeclick={handleNodeClick}
     onnodecontextmenu={handleNodeRightClick}
+    onpaneclick={handlePaneClick}
     connectOnClick={false}
     connectionMode="loose"
     connectionLineType="step"

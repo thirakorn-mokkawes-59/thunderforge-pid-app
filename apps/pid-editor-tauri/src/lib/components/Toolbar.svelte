@@ -45,6 +45,11 @@
           diagram.clear();
           data.elements?.forEach(el => diagram.addElement(el));
           data.connections?.forEach(conn => diagram.addConnection(conn));
+          
+          // Trigger fit view after restoring
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('fit-view'));
+          }, 200);
         }
       } catch (e) {
         console.error('Failed to load auto-save:', e);

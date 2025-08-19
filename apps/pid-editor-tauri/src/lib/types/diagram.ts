@@ -30,6 +30,10 @@ export interface DiagramElement {
   flipY?: boolean;
   locked?: boolean;
   showLabel?: boolean;
+  labelOffsetX?: number;
+  labelOffsetY?: number;
+  tagOffsetX?: number;
+  tagOffsetY?: number;
   zIndex?: number;
   properties?: Record<string, any>;
 }

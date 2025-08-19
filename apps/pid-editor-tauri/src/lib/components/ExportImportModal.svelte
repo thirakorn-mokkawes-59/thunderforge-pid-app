@@ -123,6 +123,11 @@
       
       console.log(`Diagram "${diagramName}" imported successfully`);
       onClose();
+      
+      // Trigger fit view after importing
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('fit-view'));
+      }, 200);
     } catch (error) {
       console.error('Import failed:', error);
       alert('Failed to import diagram. Please check the file format.');

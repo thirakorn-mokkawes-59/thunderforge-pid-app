@@ -71,6 +71,11 @@
           }
           
           console.log('Diagram loaded successfully');
+          
+          // Trigger fit view after loading
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('fit-view'));
+          }, 200);
         } catch (error) {
           console.error('Failed to load diagram:', error);
           alert('Failed to load diagram file. Please check the file format.');

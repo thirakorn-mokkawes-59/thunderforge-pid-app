@@ -260,6 +260,25 @@
       return point.y > centerY ? Position.Bottom : Position.Top;
     }
   }
+  
+  // Get tag transform based on position and offsets
+  function getTagTransform(position: string, offsetX: number, offsetY: number): string {
+    const baseOffsetX = offsetX || 0;
+    const baseOffsetY = offsetY || 0;
+    
+    switch (position) {
+      case 'below':
+        return `translateX(calc(-50% + ${baseOffsetX}px)) translateY(${baseOffsetY}px)`;
+      case 'above':
+        return `translateX(calc(-50% + ${baseOffsetX}px)) translateY(${baseOffsetY}px)`;
+      case 'left':
+        return `translateX(calc(-100% + ${baseOffsetX}px)) translateY(calc(-50% + ${baseOffsetY}px))`;
+      case 'right':
+        return `translateX(calc(100% + ${baseOffsetX}px)) translateY(calc(-50% + ${baseOffsetY}px))`;
+      default:
+        return `translateX(calc(-50% + ${baseOffsetX}px)) translateY(${baseOffsetY}px)`;
+    }
+  }
 </script>
 
 <div 
@@ -302,6 +321,7 @@
       color: {data.labelFontColor || '#666666'};
       background: {data.labelBgColor === 'transparent' ? 'transparent' : (data.labelBgColor || 'rgba(255, 255, 255, 0.9)')};
       padding: 2px 4px;
+      transform: translateX(calc(-50% + {data.labelOffsetX || 0}px)) translateY({data.labelOffsetY || 0}px);
     ">{data.name}</div>
   {/if}
   
@@ -313,6 +333,7 @@
       color: {data.tagFontColor || '#666666'};
       background: {data.tagBgColor === 'transparent' ? 'transparent' : (data.tagBgColor || 'rgba(255, 255, 255, 0.9)')};
       padding: 2px 4px;
+      transform: {getTagTransform(data.tagPosition || 'below', data.tagOffsetX, data.tagOffsetY)};
     ">
       {data.tag}
     </div>
@@ -429,7 +450,6 @@
     position: absolute;
     bottom: -20px;
     left: 50%;
-    transform: translateX(-50%);
     white-space: nowrap;
     border-radius: 2px;
   }
@@ -445,7 +465,6 @@
   .symbol-tag.tag-position-below {
     bottom: -38px;
     left: 50%;
-    transform: translateX(-50%);
   }
   
   /* When label is hidden and tag is below, move tag closer to node */
@@ -456,7 +475,6 @@
   .symbol-tag.tag-position-above {
     top: -22px;
     left: 50%;
-    transform: translateX(-50%);
   }
   
   /* When label is hidden and tag is above, it stays the same */
@@ -467,13 +485,11 @@
   .symbol-tag.tag-position-left {
     left: -10px;
     top: 50%;
-    transform: translateX(-100%) translateY(-50%);
   }
   
   .symbol-tag.tag-position-right {
     right: -10px;
     top: 50%;
-    transform: translateX(100%) translateY(-50%);
   }
   
   /* Connection handles - invisible, just for connection logic */
