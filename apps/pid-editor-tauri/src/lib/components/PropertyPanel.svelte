@@ -632,6 +632,38 @@
                 </button>
               </div>
             </div>
+            
+            <!-- Line Cap Style Control -->
+            <div class="control-section">
+              <div class="section-header">
+                <span class="section-title">Line Cap Style</span>
+              </div>
+              
+              <div class="linecap-options">
+                <button 
+                  class="style-option-btn"
+                  class:active={!selectedElement.strokeLinecap || selectedElement.strokeLinecap === 'butt'}
+                  on:click={() => updateProperty('strokeLinecap', 'butt')}
+                  title="Flat line endings"
+                >
+                  <svg width="40" height="20" viewBox="0 0 40 20">
+                    <line x1="5" y1="10" x2="35" y2="10" stroke="currentColor" stroke-width="3" stroke-linecap="butt"/>
+                  </svg>
+                  <span>Flat</span>
+                </button>
+                <button 
+                  class="style-option-btn"
+                  class:active={selectedElement.strokeLinecap === 'round'}
+                  on:click={() => updateProperty('strokeLinecap', 'round')}
+                  title="Rounded line endings"
+                >
+                  <svg width="40" height="20" viewBox="0 0 40 20">
+                    <line x1="5" y1="10" x2="35" y2="10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                  </svg>
+                  <span>Round</span>
+                </button>
+              </div>
+            </div>
           </div>
         {/if}
         
@@ -1418,6 +1450,11 @@
     display: flex;
     gap: 0.25rem;
     margin-top: 0.5rem;
+  }
+  
+  .linecap-options {
+    display: flex;
+    gap: 0.5rem;
   }
   
   .preset-btn.small {

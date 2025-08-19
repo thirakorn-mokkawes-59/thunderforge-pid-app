@@ -93,6 +93,7 @@
             color: element.color,
             opacity: element.opacity,
             strokeWidth: element.strokeWidth || 0.5,
+            strokeLinecap: element.strokeLinecap || 'butt',
             flipX: element.flipX,
             flipY: element.flipY,
             locked: element.locked,
