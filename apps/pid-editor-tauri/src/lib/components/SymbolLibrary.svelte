@@ -6,7 +6,7 @@
   import type { Symbol } from '$lib/types/symbol';
   
   let searchQuery = '';
-  let selectedCategory: SymbolCategory | 'all' = 'all';
+  let selectedCategory: SymbolCategory | 'all' = SymbolCategory.Equipment;
   let selectedStandard: SymbolStandard | 'all' = 'all';
   let filteredSymbols: Symbol[] = [];
   let isLoading = true;
@@ -63,6 +63,12 @@
       default: return category;
     }
   }
+  
+  function clearFilters() {
+    searchQuery = '';
+    selectedCategory = 'all';
+    selectedStandard = 'all';
+  }
 </script>
 
 <div class="symbol-library">
@@ -91,6 +97,14 @@
         <option value={SymbolCategory.Fittings}>Fittings</option>
         <option value={SymbolCategory.PipesAndSignals}>Pipes & Signals</option>
       </select>
+      
+      <button class="clear-filter-btn" on:click={clearFilters} title="Clear all filters">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Clear Filters
+      </button>
     </div>
   </div>
   
@@ -190,6 +204,40 @@
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .clear-filter-btn {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .clear-filter-btn:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #d1d5db;
+    color: #374151;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .clear-filter-btn:active {
+    transform: translateY(0);
+  }
+  
+  .clear-filter-btn svg {
+    width: 14px;
+    height: 14px;
   }
   
   .symbol-grid {

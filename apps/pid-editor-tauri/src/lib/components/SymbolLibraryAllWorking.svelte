@@ -20,6 +20,12 @@
     });
   }
   
+  function clearFilters() {
+    searchQuery = '';
+    selectedCategory = 'all';
+    selectedStandard = 'all';
+  }
+  
   function handleDragStart(event, symbol) {
     event.dataTransfer.effectAllowed = 'copy';
     // Create element data that matches what Canvas expects
@@ -77,6 +83,14 @@
         <option value="fittings">Fittings</option>
         <option value="pipes">Pipes & Signals</option>
       </select>
+      
+      <button class="clear-filter-btn" on:click={clearFilters} title="Clear all filters">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Clear Filters
+      </button>
     </div>
   </div>
   
@@ -163,6 +177,48 @@
   
   .filter-select {
     background: white;
+  }
+  
+  .clear-filter-btn {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    letter-spacing: 0.025em;
+  }
+  
+  .clear-filter-btn:hover {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-color: #9ca3af;
+    color: #374151;
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .clear-filter-btn:active {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-color: #f87171;
+    color: #dc2626;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .clear-filter-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
   
   .symbol-grid {
