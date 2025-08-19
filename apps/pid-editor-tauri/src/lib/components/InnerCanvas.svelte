@@ -16,7 +16,6 @@
   import { diagram } from '$lib/stores/diagram';
   import { clipboard } from '$lib/stores/clipboard';
 
-
   // Define custom node types
   const nodeTypes: NodeTypes = {
     pidSymbol: PIDSymbolNode
@@ -29,43 +28,22 @@
   // Track if we're updating nodes programmatically
   let updatingNodes = false;
   let creatingConnection = false;
-  
-  $: console.log('nodesDraggable:', !creatingConnection);
-  
+
   // Track which nodes have been initialized (to distinguish from new nodes)
   // Using $: to make it reactive but stable
   let initializedNodeIds = new Set<string>();
-  $: console.log('Current initialized IDs:', Array.from(initializedNodeIds));
 
   // Connection mode state
   let connectionMode = false;
   
   // Subscribe to grid changes - the $ prefix makes it reactive to store changes
   $: showGrid = $diagram.showGrid;
-  $: console.log('InnerCanvas: showGrid is', showGrid, 'from store:', $diagram.showGrid);
   
   // Convert diagram elements to nodes - ONLY use diagram positions for truly new nodes
   // Force reactivity on zIndex changes by including it in the reactive dependencies
   $: if (!updatingNodes && !creatingConnection) {
     // Extract zIndex values to ensure reactivity
     const zIndexValues = $diagram.elements.map(e => e.zIndex || 0);
-    console.log('=== REACTIVE UPDATE TRIGGERED ===');
-    console.log('zIndex values:', zIndexValues);
-    console.log('Current nodes before update:', nodes.map(n => ({
-      id: n.id,
-      position: n.position,
-      locked: n.data?.locked,
-      zIndex: n.internals?.z
-    })));
-    console.log('Diagram elements:', $diagram.elements.map(e => ({
-      id: e.id,
-      x: e.x,
-      y: e.y,
-      width: e.width,
-      height: e.height,
-      locked: e.locked,
-      zIndex: e.zIndex
-    })));
     
     // Create a map of current node positions to preserve them
     const currentPositions = new Map();
@@ -88,14 +66,12 @@
         if (isInitialized && existingPosition) {
           // This node has been initialized, always use its current position
           position = existingPosition;
-          console.log(`Node ${element.id}: INITIALIZED node, keeping position`, position);
         } else {
           // This is a truly new node, calculate position from diagram coordinates
           position = {
             x: element.x - element.width / 2,
             y: element.y - element.height / 2
           };
-          console.log(`Node ${element.id}: NEW node, calculated position from diagram (${element.x}, ${element.y}) -> `, position);
           // Mark as initialized
           initializedNodeIds.add(element.id);
         }
@@ -116,6 +92,7 @@
             rotation: element.rotation || 0,
             color: element.color,
             opacity: element.opacity,
+            strokeWidth: element.strokeWidth || 0.5,
             flipX: element.flipX,
             flipY: element.flipY,
             locked: element.locked,
@@ -130,13 +107,6 @@
         };
       })];
     
-    console.log('Initialized node IDs:', Array.from(initializedNodeIds));
-    console.log('Nodes after update:', nodes.map(n => ({
-      id: n.id,
-      position: n.position,
-      zIndex: n.internals?.z
-    })));
-    console.log('=== END REACTIVE UPDATE ===');
   }
 
   // Convert diagram connections to edges
@@ -172,14 +142,9 @@
 
   // Handle node drag
   function handleNodeDragStop(event: CustomEvent) {
-    const node = event.detail.node;
-    console.log('=== NODE DRAG STOP ===');
-    console.log('Node dragged:', node.id, 'to position:', node.position);
-    
+    const node = event.detail.node;    
     // Apply snap to grid if enabled
-    const snappedPosition = snapToGrid(node.position);
-    console.log('Snap to grid enabled:', $diagram.snapToGrid, 'Snapped position:', snappedPosition);
-    
+    const snappedPosition = snapToGrid(node.position);    
     updatingNodes = true;
     
     nodes = nodes.map(n => 
@@ -189,25 +154,17 @@
     );
     
     const newX = snappedPosition.x + node.data.width / 2;
-    const newY = snappedPosition.y + node.data.height / 2;
-    console.log('Updating diagram element position to:', { x: newX, y: newY });
-    
+    const newY = snappedPosition.y + node.data.height / 2;    
     diagram.updateElement(node.id, {
       x: newX,
       y: newY
     });
     
     setTimeout(() => {
-      updatingNodes = false;
-      console.log('updatingNodes set to false');
-    }, 100);
-    console.log('=== END NODE DRAG STOP ===');
-  }
+      updatingNodes = false;    }, 100);  }
 
   // Handle new connections
-  const handleConnect: OnConnect = (connection) => {
-    console.log('Connection attempt:', connection);
-    if (!connection.source || !connection.target) return;
+  const handleConnect: OnConnect = (connection) => {    if (!connection.source || !connection.target) return;
     
     creatingConnection = true;
     
@@ -247,30 +204,17 @@
 
   // Handle drop for new symbols
   function handleDrop(event: DragEvent) {
-    event.preventDefault();
-    console.log('=== NODE DROP ===');
-    console.log('Canvas locked status:', nodesLocked);
-    
+    event.preventDefault();    
     // Prevent dropping new nodes when canvas is locked
-    if (nodesLocked) {
-      console.log('Canvas is locked, cannot add new nodes');
-      return;
-    }
-    
-    console.log('Drop event:', event);
-    
-    const symbolData = event.dataTransfer?.getData('application/json');
-    console.log('Symbol data from drag:', symbolData);
-    
+    if (nodesLocked) {      return;
+    }    
+    const symbolData = event.dataTransfer?.getData('application/json');    
     if (!symbolData) {
-      console.error('No symbol data in drop event');
       return;
     }
     
     try {
-      const symbol = JSON.parse(symbolData);
-      console.log('Parsed symbol:', symbol);
-      
+      const symbol = JSON.parse(symbolData);      
       // Get the position relative to the canvas
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       let dropPosition = {
@@ -283,11 +227,7 @@
         dropPosition = flowInstance.screenToFlowPosition({
           x: event.clientX,
           y: event.clientY
-        });
-        console.log('Using flow projection:', dropPosition);
-      } else {
-        console.log('Using simple calculation:', dropPosition);
-      }
+        });      } else {      }
       
       // Apply snap to grid if enabled
       const snappedDropPosition = {
@@ -299,9 +239,7 @@
         const gridSize = $diagram.gridSize || 30;
         // Snap the center position
         snappedDropPosition.x = Math.round(dropPosition.x / gridSize) * gridSize;
-        snappedDropPosition.y = Math.round(dropPosition.y / gridSize) * gridSize;
-        console.log('Snapping drop position from', dropPosition, 'to', snappedDropPosition);
-      }
+        snappedDropPosition.y = Math.round(dropPosition.y / gridSize) * gridSize;      }
       
       // Center the element at the drop position
       const element = {
@@ -315,18 +253,10 @@
         height: 60,
         rotation: 0,
         showLabel: true
-      };
-      
-      console.log('Adding element at position:', dropPosition);
-      console.log('Element to add:', element);
-      
+      };      
       // Add element to diagram
-      diagram.addElement(element);
-      console.log('Element added to diagram');
-      
-      console.log('=== END NODE DROP ===');
-    } catch (error) {
-      console.error('Error parsing symbol data:', error);
+      diagram.addElement(element);    } catch (error) {
+      // Silently handle parse errors
     }
   }
 
@@ -335,28 +265,18 @@
     if (event.dataTransfer) {
       // Allow drop only when canvas is not locked
       event.dataTransfer.dropEffect = nodesLocked ? 'none' : 'copy';
-    }
-    console.log('Drag over canvas, locked:', nodesLocked);
-  }
+    }  }
 
   // Handle node selection
   function handleNodeClick(event: any) {
     // Prevent selection when canvas is locked
-    if (nodesLocked) {
-      console.log('Canvas is locked, cannot select nodes');
-      return;
-    }
-    
-    console.log('Node clicked event:', event);
-    if (event && event.node) {
-      const nodeId = event.node.id;
-      console.log('Selecting node:', nodeId);
-      if (nodeId) {
+    if (nodesLocked) {      return;
+    }    if (event && event.node) {
+      const nodeId = event.node.id;      if (nodeId) {
         diagram.selectElement(nodeId);
       }
     }
   }
-
 
   // Handle connection mode toggle
   function handleConnectionModeToggle(event: CustomEvent<{ enabled: boolean }>) {
@@ -379,33 +299,19 @@
       const selectedIds = Array.from($diagram.selectedIds);
       if (selectedIds.length > 0) {
         event.preventDefault();
-        selectedIds.forEach(id => {
-          console.log('Deleting node:', id);
-          diagram.removeElement(id);
+        selectedIds.forEach(id => {          diagram.removeElement(id);
         });
       }
     }
     
     // Undo (Ctrl+Z)
     if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
-      event.preventDefault();
-      console.log('Undo action');
-      if (diagram.undo()) {
-        console.log('Undo successful');
-      } else {
-        console.log('Nothing to undo');
-      }
+      event.preventDefault();      if (diagram.undo()) {      } else {      }
     }
     
     // Redo (Ctrl+Y or Ctrl+Shift+Z)
     if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
-      event.preventDefault();
-      console.log('Redo action');
-      if (diagram.redo()) {
-        console.log('Redo successful');
-      } else {
-        console.log('Nothing to redo');
-      }
+      event.preventDefault();      if (diagram.redo()) {      } else {      }
     }
     
     // Export (Ctrl+S)
@@ -416,9 +322,7 @@
       // Debounce to prevent multiple triggers
       const now = Date.now();
       if (now - lastExportTrigger > 100) {
-        lastExportTrigger = now;
-        console.log('Export shortcut triggered');
-        const exportEvent = new CustomEvent('open-export-import');
+        lastExportTrigger = now;        const exportEvent = new CustomEvent('open-export-import');
         window.dispatchEvent(exportEvent);
       }
     }
@@ -432,9 +336,7 @@
           const element = $diagram.elements.find(el => el.id === id);
           if (element) {
             const currentRotation = element.rotation || 0;
-            const newRotation = (currentRotation + 90) % 360;
-            console.log(`Rotating node ${id} from ${currentRotation}° to ${newRotation}°`);
-            diagram.updateElement(id, { rotation: newRotation });
+            const newRotation = (currentRotation + 90) % 360;            diagram.updateElement(id, { rotation: newRotation });
           }
         });
       }
@@ -446,9 +348,7 @@
       if (selectedIds.length > 0) {
         event.preventDefault();
         const elementsToCopy = $diagram.elements.filter(el => selectedIds.includes(el.id));
-        clipboard.copy(elementsToCopy);
-        console.log(`Copied ${elementsToCopy.length} element(s) to clipboard`);
-      }
+        clipboard.copy(elementsToCopy);      }
     }
     
     // Paste copied node(s) (Ctrl+V)
@@ -456,9 +356,7 @@
       event.preventDefault();
       const copiedElements = clipboard.getCopiedElements();
       
-      if (copiedElements.length > 0) {
-        console.log(`Pasting ${copiedElements.length} element(s) from clipboard`);
-        
+      if (copiedElements.length > 0) {        
         // Clear current selection
         diagram.deselectAll();
         
@@ -476,34 +374,25 @@
           diagram.addElement(newElement);
           // Select the newly pasted element
           diagram.selectElement(newElement.id, true);
-        });
-        
-        console.log('Paste completed');
-      }
+        });      }
     }
   }
 
   // Handle right-click context menu
   let contextMenu: { x: number; y: number; nodeId?: string; isCanvas?: boolean } | null = null;
   
-  function handleNodeRightClick(event: any) {
-    console.log('Node right-click event:', event);
-    // Prevent default browser context menu
+  function handleNodeRightClick(event: any) {    // Prevent default browser context menu
     if (event.event) {
       event.event.preventDefault();
       event.event.stopPropagation();
     }
     
     // Prevent context menu when canvas is locked
-    if (nodesLocked) {
-      console.log('Canvas is locked, cannot show context menu');
-      return;
+    if (nodesLocked) {      return;
     }
     
     if (event && event.node) {
-      const nodeId = event.node.id;
-      console.log('Right-clicked node:', nodeId);
-      
+      const nodeId = event.node.id;      
       // Show context menu
       contextMenu = {
         x: event.event.clientX,
@@ -526,16 +415,12 @@
     event.stopPropagation();
     
     // Don't show menu if canvas is locked
-    if (nodesLocked) {
-      console.log('Canvas is locked, cannot show context menu');
-      return;
+    if (nodesLocked) {      return;
     }
     
     // Only show if we have something to paste
     const hasCopiedElements = clipboard.getCopiedElements().length > 0;
-    if (!hasCopiedElements) {
-      console.log('No elements in clipboard');
-      return;
+    if (!hasCopiedElements) {      return;
     }
     
     // Show canvas context menu
@@ -551,9 +436,7 @@
     
     const copiedElements = clipboard.getCopiedElements();
     
-    if (copiedElements.length > 0) {
-      console.log(`Pasting ${copiedElements.length} element(s) from clipboard`);
-      
+    if (copiedElements.length > 0) {      
       // Get the position where user right-clicked (convert to flow coordinates)
       let pastePosition = { x: contextMenu.x, y: contextMenu.y };
       
@@ -584,18 +467,13 @@
         
         diagram.addElement(newElement);
         diagram.selectElement(newElement.id, true);
-      });
-      
-      console.log('Paste completed at position:', pastePosition);
-    }
+      });    }
     
     closeContextMenu();
   }
   
   function deleteNodeFromMenu() {
-    if (contextMenu) {
-      console.log('Deleting node from menu:', contextMenu.nodeId);
-      diagram.removeElement(contextMenu.nodeId);
+    if (contextMenu) {      diagram.removeElement(contextMenu.nodeId);
       closeContextMenu();
     }
   }
@@ -605,9 +483,7 @@
       const element = $diagram.elements.find(el => el.id === contextMenu.nodeId);
       if (element) {
         const currentRotation = element.rotation || 0;
-        const newRotation = (currentRotation + 90) % 360;
-        console.log(`Rotating node ${contextMenu.nodeId} from ${currentRotation}° to ${newRotation}°`);
-        diagram.updateElement(contextMenu.nodeId, { rotation: newRotation });
+        const newRotation = (currentRotation + 90) % 360;        diagram.updateElement(contextMenu.nodeId, { rotation: newRotation });
       }
       closeContextMenu();
     }
@@ -617,9 +493,7 @@
     if (contextMenu) {
       const element = $diagram.elements.find(el => el.id === contextMenu.nodeId);
       if (element) {
-        clipboard.copy([element]);
-        console.log(`Copied node ${contextMenu.nodeId} to clipboard`);
-      }
+        clipboard.copy([element]);      }
       closeContextMenu();
     }
   }
@@ -637,9 +511,7 @@
         };
         
         diagram.addElement(newElement);
-        diagram.selectElement(newElement.id);
-        console.log(`Duplicated node ${contextMenu.nodeId}`);
-      }
+        diagram.selectElement(newElement.id);      }
       closeContextMenu();
     }
   }
@@ -647,21 +519,13 @@
   let flowInstance: any = null;
   let nodesLocked = false;
   
-  function handleZoomChange(event: CustomEvent<{ type: 'in' | 'out' }>) {
-    console.log('Zoom event received:', event.detail.type);
-    console.log('Flow instance available:', !!flowInstance);
-    
+  function handleZoomChange(event: CustomEvent<{ type: 'in' | 'out' }>) {    
     if (!flowInstance) {
-      console.warn('Flow instance not available yet');
       return;
     }
     
-    if (event.detail.type === 'in') {
-      console.log('Zooming in...');
-      flowInstance.zoomIn();
-    } else {
-      console.log('Zooming out...');
-      flowInstance.zoomOut();
+    if (event.detail.type === 'in') {      flowInstance.zoomIn();
+    } else {      flowInstance.zoomOut();
     }
   }
   
@@ -671,28 +535,21 @@
   }
   
   function handleToggleLock(event: CustomEvent<{ locked: boolean }>) {
-    nodesLocked = event.detail.locked;
-    console.log('Canvas lock toggled:', nodesLocked);
-    
+    nodesLocked = event.detail.locked;    
     // Clear any existing selection when locking
     if (nodesLocked) {
       diagram.deselectAll();
     }
   }
-  
-  
+
   // Store the flow instance when it's ready
   function onInit() {
     const flow = useSvelteFlow();
-    flowInstance = flow;
-    console.log('Flow instance initialized', flowInstance);
-  }
+    flowInstance = flow;  }
   
   // Handle position updates from property panel
   function handleNodePositionUpdate(event: CustomEvent) {
-    const { nodeId, x, y } = event.detail;
-    console.log('Updating node position from property panel:', nodeId, x, y);
-    
+    const { nodeId, x, y } = event.detail;    
     // Calculate the node position (top-left corner) from center position
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
@@ -717,13 +574,9 @@
   
   // Handle size updates from property panel
   function handleNodeSizeUpdate(event: CustomEvent) {
-    const { nodeId, width, height } = event.detail;
-    console.log('InnerCanvas: Updating node size from property panel:', nodeId, 'width:', width, 'height:', height);
-    
+    const { nodeId, width, height } = event.detail;    
     // Find the current node
-    const currentNode = nodes.find(n => n.id === nodeId);
-    console.log('Current node before update:', currentNode);
-    
+    const currentNode = nodes.find(n => n.id === nodeId);    
     // Update the node data with new size
     updatingNodes = true;
     nodes = nodes.map(n => {
@@ -735,15 +588,10 @@
             width, 
             height 
           }
-        };
-        console.log('Updated node:', updated);
-        return updated;
+        };        return updated;
       }
       return n;
-    });
-    
-    console.log('Nodes after update:', nodes);
-    
+    });    
     setTimeout(() => {
       updatingNodes = false;
     }, 100);
@@ -787,31 +635,21 @@
     {nodeTypes}
     oninit={onInit}
     onconnect={handleConnect}
-    onconnectstart={(event, params) => {
-      console.log('Connection start:', params);
-      creatingConnection = true;
+    onconnectstart={(event, params) => {      creatingConnection = true;
     }}
-    onconnectend={(event) => {
-      console.log('Connection end');
-      setTimeout(() => {
+    onconnectend={(event) => {      setTimeout(() => {
         creatingConnection = false;
       }, 100);
     }}
-    onnodedrag={(event) => {
-      console.log('Drag event:', event);
-      const node = event?.nodes?.[0] || event;
-      if (node && node.id) {
-        console.log('NODE DRAGGING:', node.id, 'to', node.position);
-        nodes = nodes.map(n => 
+    onnodedrag={(event) => {      const node = event?.nodes?.[0] || event;
+      if (node && node.id) {        nodes = nodes.map(n => 
           n.id === node.id 
             ? { ...n, position: node.position }
             : n
         );
       }
     }}
-    onnodedragstop={(event) => {
-      console.log('Drag stop event:', event);
-      const node = event?.nodes?.[0] || event;
+    onnodedragstop={(event) => {      const node = event?.nodes?.[0] || event;
       if (node && node.id) {
         handleNodeDragStop({ detail: { node } });
       }
@@ -1008,8 +846,7 @@
   :global(.svelte-flow__node) {
     transition: none !important;
   }
-  
-  
+
   /* Style the control buttons icons */
   :global(.svelte-flow__controls-button svg) {
     fill: #1f2937 !important;

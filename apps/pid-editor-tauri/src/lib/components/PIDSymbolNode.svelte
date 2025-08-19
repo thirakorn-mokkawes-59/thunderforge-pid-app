@@ -14,11 +14,11 @@
   // Use our store to determine if selected
   $: isSelected = $diagram.selectedIds.has(id);
   
-  $: if (dragging) console.log('Node', id, 'is being dragged');
   
   // Apply visual properties
   $: nodeColor = data.color || '#000000';
   $: nodeOpacity = data.opacity || 1;
+  $: nodeStrokeWidth = data.strokeWidth || 0.5;
   $: transformStyle = `
     rotate(${data.rotation || 0}deg)
     ${data.flipX ? 'scaleX(-1)' : ''}
@@ -27,10 +27,19 @@
   
   let svgContent = '';
   let connectionPoints: Array<{x: number, y: number, id: string}> = [];
+  let isLoading = true;
   
-  // Load SVG and parse connection points
-  onMount(async () => {
-    if (data.symbolPath) {
+  // Load SVG and parse connection points - only on path change
+  $: if (data.symbolPath && !svgContent) loadSvg(data.symbolPath);
+  
+  // Update stroke width when it changes
+  $: if (svgContent && nodeStrokeWidth !== undefined) {
+    // Use a small delay to ensure DOM is ready
+    setTimeout(() => updateStrokeWidthDirectly(nodeStrokeWidth), 0);
+  }
+  
+  async function loadSvg(symbolPath: string) {
+    if (symbolPath) {
       try {
         const response = await fetch(data.symbolPath);
         const text = await response.text();
@@ -48,8 +57,8 @@
         const scaleX = data.width / vbWidth;
         const scaleY = data.height / vbHeight;
         
-        // Find red elements and get their positions
-        const redElements = svg.querySelectorAll('[stroke="#ff0000"], [stroke="rgb(255,0,0)"], [stroke="red"]');
+        // Find connection indicator elements (red for equipment/valves, gray for pipes/signals)
+        const redElements = svg.querySelectorAll('[stroke="#ff0000"], [stroke="rgb(255,0,0)"], [stroke="red"], [stroke="#646464"], [stroke="rgb(100,100,100)"]');
         
         // Simple approach: find red elements and calculate centers directly
         const rawPoints = Array.from(redElements).map((el, index) => {
@@ -79,7 +88,6 @@
           const scaledX = (finalX + 1.2) * scaleX; // Shift right by 1.2 units to align with vertical line
           const scaledY = finalY * scaleY;
           
-          console.log(`Red element ${index}: pos (${finalX.toFixed(2)}, ${finalY.toFixed(2)}), scaled (${scaledX.toFixed(2)}, ${scaledY.toFixed(2)})`);
           
           return {
             x: scaledX,
@@ -88,7 +96,6 @@
           };
         });
         
-        console.log(`Found ${redElements.length} red elements total`);
         
         // Group nearby points (within 5 pixels) to eliminate duplicates
         const groupedPoints: typeof rawPoints = [];
@@ -115,10 +122,6 @@
           id: `handle-${index}`
         }));
         
-        console.log(`Found ${redElements.length} red elements, grouped to ${connectionPoints.length} connection points for ${data.name}`);
-        connectionPoints.forEach((point, i) => {
-          console.log(`  Point ${i}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`);
-        });
         
         // Hide red elements initially instead of removing them
         redElements.forEach(el => {
@@ -126,13 +129,85 @@
           el.setAttribute('opacity', '0');
         });
         
-        // Set the SVG content with hidden red elements
+        // Remove pipe labels (T and PIPE text) for cleaner display
+        const blueTextElements = svg.querySelectorAll('[fill="#004c99"], [fill="rgb(0,76,153)"]');
+        blueTextElements.forEach(el => {
+          // Check if it's a text path or contains text content
+          if (el.tagName.toLowerCase() === 'path' && el.parentElement) {
+            const parentTransform = el.parentElement.getAttribute('transform') || '';
+            // These are typically text paths in pipe symbols
+            if (parentTransform.includes('translate')) {
+              el.parentElement.remove();
+            }
+          }
+        });
+        
+        // Process fill attributes to prevent flash and apply stroke-width
+        const allElements = svg.querySelectorAll('*');
+        allElements.forEach(el => {
+          const fill = el.getAttribute('fill');
+          // Preserve white fills explicitly
+          if (fill === 'white') {
+            el.style.fill = 'white';
+          } else if (fill === 'none' || !fill) {
+            el.style.fill = 'none';
+          }
+          
+          // Apply stroke width to elements with stroke (except connection indicators)
+          if (!el.classList.contains('connection-indicator')) {
+            const hasStroke = el.getAttribute('stroke');
+            if (hasStroke && hasStroke !== 'none') {
+              el.setAttribute('stroke-width', nodeStrokeWidth.toString());
+              el.style.strokeWidth = nodeStrokeWidth + 'px';
+            }
+          }
+        });
+        
+        // Set the SVG content with processed fills
         svgContent = new XMLSerializer().serializeToString(svg);
+        isLoading = false;
+        
+        // Apply current stroke width after SVG is rendered
+        setTimeout(() => updateStrokeWidthDirectly(nodeStrokeWidth), 10);
       } catch (error) {
         console.error('Failed to load SVG:', error);
+        isLoading = false;
       }
     }
-  });
+  }
+  
+  // Update stroke width without reloading entire SVG
+  function updateStrokeWidthDirectly(strokeWidth: number) {
+    // Wait for next tick to ensure DOM is ready
+    requestAnimationFrame(() => {
+      const container = document.querySelector(`[data-node-id="${id}"] .symbol-content`);
+      if (container) {
+        const svgElement = container.querySelector('svg');
+        if (svgElement) {
+          // Get all stroke elements, not just specific types
+          const allElements = svgElement.querySelectorAll('*');
+          allElements.forEach(el => {
+            // Skip connection indicators 
+            if (!el.classList.contains('connection-indicator')) {
+              const hasStroke = el.getAttribute('stroke');
+              // Apply to any element with a stroke that's not a connection indicator
+              if (hasStroke && hasStroke !== 'none') {
+                // Skip red connection indicators
+                if (hasStroke === '#ff0000' || hasStroke === '#646464' || 
+                    hasStroke === 'red' || hasStroke === 'rgb(255,0,0)' ||
+                    hasStroke === 'rgb(100,100,100)') {
+                  return;
+                }
+                // Force update with important to override any CSS
+                (el as SVGElement).style.setProperty('stroke-width', strokeWidth + 'px', 'important');
+                el.setAttribute('stroke-width', strokeWidth.toString());
+              }
+            }
+          });
+        }
+      }
+    });
+  }
   
   // Get handle rotation based on position
   function getHandleRotation(point: {x: number, y: number}): number {
@@ -187,14 +262,15 @@
   class:selected={isSelected}
   class:dragging
   class:locked={data.locked}
-  style="width: {data.width}px; height: {data.height}px; transform: {transformStyle}; opacity: {nodeOpacity};"
+  data-node-id={id}
+  style="width: {data.width}px; height: {data.height}px; transform: {transformStyle}; opacity: {nodeOpacity}; background: {isLoading ? 'white' : 'transparent'};"
 >
   {#if svgContent}
-    <!-- Display the SVG symbol with color -->
-    <div class="symbol-content" style="color: {nodeColor};">
+    <!-- Display the SVG symbol with color and stroke width -->
+    <div class="symbol-content" style="color: {nodeColor}; --stroke-width: {nodeStrokeWidth}px;">
       {@html svgContent}
     </div>
-  {:else}
+  {:else if !isLoading}
     <!-- Fallback to image if SVG parsing fails -->
     <img src={data.symbolPath} alt={data.name} style="filter: brightness(0) saturate(100%) {nodeColor !== '#000000' ? `drop-shadow(0 0 0 ${nodeColor})` : ''};" />
   {/if}
@@ -250,13 +326,35 @@
     height: 100%;
   }
   
-  /* Apply color to SVG strokes and fills */
-  .symbol-content :global(svg *) {
+  /* Apply color to SVG strokes only, preserve fills */
+  .symbol-content :global(svg path),
+  .symbol-content :global(svg line),
+  .symbol-content :global(svg rect),
+  .symbol-content :global(svg circle),
+  .symbol-content :global(svg ellipse),
+  .symbol-content :global(svg polygon),
+  .symbol-content :global(svg polyline) {
     stroke: currentColor !important;
+  }
+  
+  /* Don't apply stroke width to connection indicators */
+  .symbol-content :global(svg .connection-indicator) {
+    stroke-width: 0.5px !important;
+  }
+  
+  /* Preserve white fills for vessels and equipment */
+  .symbol-content :global(svg [fill="white"]) {
+    fill: white !important;
+  }
+  
+  /* For elements with no fill or fill="none", keep them transparent */
+  .symbol-content :global(svg *:not([fill])),
+  .symbol-content :global(svg [fill="none"]) {
     fill: none !important;
   }
   
-  .symbol-content :global(svg [fill]:not([fill="none"])) {
+  /* For non-white, non-none fills, use currentColor */
+  .symbol-content :global(svg [fill]:not([fill="none"]):not([fill="white"])) {
     fill: currentColor !important;
   }
   
@@ -403,7 +501,7 @@
   
   /* Show red T-shapes in blue when hovering over the node */
   .pid-symbol-node:hover .symbol-content :global(.connection-indicator) {
-    opacity: 0.7 !important;
+    opacity: 1 !important;
     stroke: #3b82f6 !important;
   }
   

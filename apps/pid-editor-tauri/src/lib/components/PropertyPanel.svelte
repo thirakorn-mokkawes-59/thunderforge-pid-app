@@ -583,6 +583,55 @@
                 on:input={(e) => updateProperty('opacity', parseFloat(e.currentTarget.value))}
               />
             </div>
+            
+            <!-- Stroke Width Control -->
+            <div class="control-section">
+              <div class="section-header">
+                <span class="section-title">Line Weight</span>
+                <span class="section-value">{selectedElement.strokeWidth || 0.5}px</span>
+              </div>
+              
+              <input 
+                type="range" 
+                class="slider"
+                min="0.1" 
+                max="5" 
+                step="0.1"
+                value={selectedElement.strokeWidth || 0.5}
+                on:input={(e) => updateProperty('strokeWidth', parseFloat(e.currentTarget.value))}
+              />
+              
+              <div class="stroke-presets">
+                <button 
+                  class="preset-btn small"
+                  class:active={selectedElement.strokeWidth === 0.5 || !selectedElement.strokeWidth}
+                  on:click={() => updateProperty('strokeWidth', 0.5)}
+                >
+                  Thin
+                </button>
+                <button 
+                  class="preset-btn small"
+                  class:active={selectedElement.strokeWidth === 1}
+                  on:click={() => updateProperty('strokeWidth', 1)}
+                >
+                  Normal
+                </button>
+                <button 
+                  class="preset-btn small"
+                  class:active={selectedElement.strokeWidth === 2}
+                  on:click={() => updateProperty('strokeWidth', 2)}
+                >
+                  Bold
+                </button>
+                <button 
+                  class="preset-btn small"
+                  class:active={selectedElement.strokeWidth === 3}
+                  on:click={() => updateProperty('strokeWidth', 3)}
+                >
+                  Heavy
+                </button>
+              </div>
+            </div>
           </div>
         {/if}
         
@@ -1363,6 +1412,17 @@
     color: white;
     box-shadow: 0 3px 8px rgba(99, 102, 241, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px) scale(1.05);
+  }
+  
+  .stroke-presets {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+  }
+  
+  .preset-btn.small {
+    padding: 0.25rem 0.5rem;
+    font-size: var(--text-xs);
   }
   
   /* Color Controls */
