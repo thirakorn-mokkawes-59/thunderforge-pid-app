@@ -162,7 +162,13 @@
       timestamp: Date.now()
     });
     
-    return $diagram.connections.map(conn => {
+    // Filter out any connections where handles might not be ready
+    return $diagram.connections.filter(conn => {
+      // Check if both nodes exist
+      const sourceNode = nodes.find(n => n.id === conn.from.elementId);
+      const targetNode = nodes.find(n => n.id === conn.to.elementId);
+      return sourceNode && targetNode;
+    }).map(conn => {
       // Find source and target nodes to get their data
       const sourceNode = nodes.find(n => n.id === conn.from.elementId);
       const targetNode = nodes.find(n => n.id === conn.to.elementId);
@@ -784,6 +790,9 @@
           await tick();
         }
         
+        // Add a small delay to ensure handles are fully registered
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Now recreate edges with our custom component
         canCreateEdges = true;
         nodesReady = true;
@@ -801,19 +810,23 @@
             });
             
             // After fit view, update node internals again and force edge update
-            setTimeout(() => {
+            setTimeout(async () => {
               console.log('[InnerCanvas] Final update after fitView');
               
               // Update node internals one more time
               if (updateNodeInternals) {
                 const nodeIds = flowInstance.getNodes().map(n => n.id);
                 updateNodeInternals(nodeIds);
+                await tick();
               }
               
-              // Then update edges
+              // Add delay to ensure handles are ready
               setTimeout(() => {
-                edgeVersion++;
-              }, 50);
+                // Only increment if edges exist to avoid the handle error
+                if ($diagram.connections.length > 0) {
+                  edgeVersion++;
+                }
+              }, 100);
             }, 250);
           }, 100);
         }
