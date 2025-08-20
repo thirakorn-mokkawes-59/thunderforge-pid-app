@@ -131,19 +131,21 @@
     target: conn.to.elementId,
     sourceHandle: `handle-${conn.from.pointIndex || 0}`,
     targetHandle: `handle-${conn.to.pointIndex || 0}`,
-    type: 'step',
+    type: 'step', // Back to step for better P&ID appearance
     animated: false,
     style: `stroke: ${conn.style.strokeColor}; stroke-width: 0.37px;`,
     markerEnd: {
       type: MarkerType.Arrow,
       width: 8,
       height: 8,
-      color: conn.style.strokeColor,
-      markerUnits: 'strokeWidth',
-      orient: 'auto'
+      color: conn.style.strokeColor
     },
-    interactionWidth: 0
-    // Removed offsetEnd to make edges connect directly to T-shapes
+    interactionWidth: 0,
+    // Use negative offset to extend edges INTO the symbols
+    data: { 
+      offsetStart: -10,  // Extend 10px into source symbol
+      offsetEnd: -10     // Extend 10px into target symbol
+    }
   }));
 
   // Snap position to grid if enabled
