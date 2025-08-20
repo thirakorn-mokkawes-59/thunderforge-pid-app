@@ -31,9 +31,10 @@ function createClipboardStore() {
 
     getCopiedElements(): DiagramElement[] {
       let elements: DiagramElement[] = [];
-      subscribe(state => {
+      const unsubscribe = subscribe(state => {
         elements = state.copiedElements;
-      })();
+      });
+      unsubscribe();
       return elements;
     },
 
@@ -43,9 +44,10 @@ function createClipboardStore() {
 
     hasCopiedElements(): boolean {
       let hasElements = false;
-      subscribe(state => {
+      const unsubscribe = subscribe(state => {
         hasElements = state.copiedElements.length > 0;
-      })();
+      });
+      unsubscribe();
       return hasElements;
     }
   };

@@ -1,23 +1,27 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { allSymbols } from '$lib/data/allSymbols';
+  import { symbolFilter } from '$lib/utils/symbolFilter';
+  import { createSymbolDragData, debounce } from '$lib/utils/domHelpers';
+  import { UI_CONSTANTS } from '$lib/constants/ui';
   
   let searchQuery = '';
   let selectedCategory = 'all';
   let selectedStandard = 'all';
   let filteredSymbols = [];
   
+  // Use optimized filtering with caching
+  const filterSymbolsOptimized = debounce(() => {
+    filteredSymbols = symbolFilter.filterSymbols(
+      allSymbols,
+      searchQuery,
+      selectedCategory,
+      selectedStandard
+    );
+  }, UI_CONSTANTS.ANIMATION.DEBOUNCE_DELAY);
+  
   function filterSymbols() {
-    filteredSymbols = allSymbols.filter(symbol => {
-      const matchesSearch = !searchQuery || 
-        symbol.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || 
-        symbol.category === selectedCategory;
-      const matchesStandard = selectedStandard === 'all' || 
-        symbol.standard === selectedStandard;
-      
-      return matchesSearch && matchesCategory && matchesStandard;
-    });
+    filterSymbolsOptimized();
   }
   
   function clearFilters() {
@@ -28,21 +32,9 @@
   
   function handleDragStart(event, symbol) {
     event.dataTransfer.effectAllowed = 'copy';
-    // Create element data that matches what Canvas expects
-    const elementData = {
-      id: `element_${Date.now()}`,
-      symbolId: symbol.id,
-      symbolPath: symbol.path,  // This is what we have from allSymbols
-      name: symbol.name,
-      x: 0,
-      y: 0,
-      width: 60,
-      height: 60,
-      rotation: 0
-    };
-    
-    // Set the data
-    event.dataTransfer.setData('application/json', JSON.stringify(elementData));
+    // Use utility function for consistent drag data
+    const dragData = createSymbolDragData(symbol);
+    event.dataTransfer.setData('application/json', dragData);
     event.dataTransfer.setData('text/plain', symbol.name);
   }
   
@@ -127,7 +119,7 @@
 
 <style>
   .symbol-library {
-    width: 320px;
+    width: 320px; /* Use UI_CONSTANTS.PANELS.SYMBOL_LIBRARY_WIDTH in future */
     height: 100%;
     background: #ffffff;
     border-right: 1px solid #e5e7eb;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { diagram } from '$lib/stores/diagram';
   import Icon from './Icon.svelte';
   import { Save, FolderOpen, Image, FileCode, RotateCcw } from '$lib/icons';
@@ -161,7 +162,12 @@
   }
   
   // Auto-save every 30 seconds
-  setInterval(autoSave, 30000);
+  const autoSaveInterval = setInterval(autoSave, 30000);
+  
+  // Cleanup interval on component destroy
+  onDestroy(() => {
+    clearInterval(autoSaveInterval);
+  });
 </script>
 
 <div class="file-operations">

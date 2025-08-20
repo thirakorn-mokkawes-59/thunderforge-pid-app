@@ -1,8 +1,9 @@
 <script lang="ts">
   import { Handle, Position } from '@xyflow/svelte';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import type { NodeProps } from '@xyflow/svelte';
   import { diagram } from '$lib/stores/diagram';
+  import { UI_CONSTANTS } from '$lib/constants/ui';
   
   type $$Props = NodeProps;
   
@@ -18,8 +19,8 @@
   // Apply visual properties
   $: nodeColor = data.color || '#000000';
   $: nodeOpacity = data.opacity || 1;
-  $: nodeStrokeWidth = data.strokeWidth || 0.5;
-  $: nodeStrokeLinecap = data.strokeLinecap || 'butt';
+  $: nodeStrokeWidth = data.strokeWidth || UI_CONSTANTS.STROKE.DEFAULT_WIDTH;
+  $: nodeStrokeLinecap = data.strokeLinecap || UI_CONSTANTS.STROKE.DEFAULT_LINECAP;
   $: transformStyle = `
     rotate(${data.rotation || 0}deg)
     ${data.flipX ? 'scaleX(-1)' : ''}
@@ -30,19 +31,34 @@
   let connectionPoints: Array<{x: number, y: number, id: string}> = [];
   let isLoading = true;
   
+  // Track active timeouts and animation frames for cleanup
+  let activeTimeouts: Set<number> = new Set();
+  let activeAnimationFrames: Set<number> = new Set();
+  let abortController: AbortController | null = null;
+  
   // Load SVG and parse connection points - only on path change
   $: if (data.symbolPath && !svgContent) loadSvg(data.symbolPath);
   
   // Update stroke width and linecap when they change
   $: if (svgContent && (nodeStrokeWidth !== undefined || nodeStrokeLinecap !== undefined)) {
     // Use a small delay to ensure DOM is ready
-    setTimeout(() => updateStrokePropertiesDirectly(nodeStrokeWidth, nodeStrokeLinecap), 0);
+    const timeoutId = setTimeout(() => {
+      updateStrokePropertiesDirectly(nodeStrokeWidth, nodeStrokeLinecap);
+      activeTimeouts.delete(timeoutId);
+    }, 0);
+    activeTimeouts.add(timeoutId);
   }
   
   async function loadSvg(symbolPath: string) {
     if (symbolPath) {
+      // Cancel any pending fetch
+      if (abortController) {
+        abortController.abort();
+      }
+      abortController = new AbortController();
+      
       try {
-        const response = await fetch(data.symbolPath);
+        const response = await fetch(data.symbolPath, { signal: abortController.signal });
         const text = await response.text();
         
         // Parse SVG
@@ -171,9 +187,16 @@
         isLoading = false;
         
         // Apply current stroke properties after SVG is rendered
-        setTimeout(() => updateStrokePropertiesDirectly(nodeStrokeWidth, nodeStrokeLinecap), 10);
+        const timeoutId = setTimeout(() => {
+          updateStrokePropertiesDirectly(nodeStrokeWidth, nodeStrokeLinecap);
+          activeTimeouts.delete(timeoutId);
+        }, 10);
+        activeTimeouts.add(timeoutId);
       } catch (error) {
-        console.error('Failed to load SVG:', error);
+        // Only log if not aborted
+        if (error.name !== 'AbortError') {
+          console.error('Failed to load SVG:', error);
+        }
         isLoading = false;
       }
     }
@@ -182,7 +205,7 @@
   // Update stroke properties without reloading entire SVG
   function updateStrokePropertiesDirectly(strokeWidth: number, strokeLinecap: string) {
     // Wait for next tick to ensure DOM is ready
-    requestAnimationFrame(() => {
+    const frameId = requestAnimationFrame(() => {
       const container = document.querySelector(`[data-node-id="${id}"] .symbol-content`);
       if (container) {
         const svgElement = container.querySelector('svg');
@@ -211,7 +234,9 @@
           });
         }
       }
+      activeAnimationFrames.delete(frameId);
     });
+    activeAnimationFrames.add(frameId);
   }
   
   // Get handle rotation based on position
@@ -279,6 +304,27 @@
         return `translateX(calc(-50% + ${baseOffsetX}px)) translateY(${baseOffsetY}px)`;
     }
   }
+  
+  // Cleanup on component destroy
+  onDestroy(() => {
+    // Clear all active timeouts
+    activeTimeouts.forEach(id => clearTimeout(id));
+    activeTimeouts.clear();
+    
+    // Cancel all active animation frames
+    activeAnimationFrames.forEach(id => cancelAnimationFrame(id));
+    activeAnimationFrames.clear();
+    
+    // Abort any pending fetch
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
+    
+    // Clear SVG content to free memory
+    svgContent = '';
+    connectionPoints = [];
+  });
 </script>
 
 <div 
