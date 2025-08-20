@@ -101,154 +101,97 @@
         // Find connection indicator elements (red for equipment/valves, gray for pipes/signals)
         const redElements = svg.querySelectorAll('[stroke="#ff0000"], [stroke="rgb(255,0,0)"], [stroke="red"], [stroke="#646464"], [stroke="rgb(100,100,100)"]');
         
+        console.log(`Found ${redElements.length} red elements in SVG:`, id);
+        
         // Improved approach: find T-shape groups and calculate connection edge
         const tShapeGroups = new Map();
         
-        // Group T-shape elements by proximity
-        Array.from(redElements).forEach((el, index) => {
-          let baseX = 0, baseY = 0;
-          
-          // Get element's base position
-          if (el.tagName.toLowerCase() === 'line') {
-            const x1 = parseFloat(el.getAttribute('x1') || '0');
-            const y1 = parseFloat(el.getAttribute('y1') || '0');
-            const x2 = parseFloat(el.getAttribute('x2') || '0');
-            const y2 = parseFloat(el.getAttribute('y2') || '0');
-            baseX = (x1 + x2) / 2;
-            baseY = (y1 + y2) / 2;
-          } else if (el.tagName.toLowerCase() === 'path') {
-            // For path elements, try to extract coordinates
-            const d = el.getAttribute('d') || '';
-            const coords = d.match(/M\s*([-\d.]+)\s*([-\d.]+)/);
-            if (coords) {
-              baseX = parseFloat(coords[1]);
-              baseY = parseFloat(coords[2]);
-            }
-          }
-          
-          // Apply transforms
-          let currentElement = el;
-          while (currentElement && currentElement !== svg) {
-            const transform = currentElement.getAttribute('transform') || '';
-            const translateMatch = transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
-            if (translateMatch) {
-              baseX += parseFloat(translateMatch[1]);
-              baseY += parseFloat(translateMatch[2]);
-            }
-            currentElement = currentElement.parentElement;
-          }
-          
-          // Find or create group for this position
-          const groupKey = `${Math.round(baseX/5)}_${Math.round(baseY/5)}`;
-          if (!tShapeGroups.has(groupKey)) {
-            tShapeGroups.set(groupKey, []);
-          }
-          tShapeGroups.get(groupKey).push({
-            element: el,
-            x: baseX,
-            y: baseY,
-            index
-          });
-        });
+        // Find the top T-junction by detecting both horizontal and vertical lines
+        let topTJunctionPoint = null;
+        let horizontalLine = null;
+        let verticalLine = null;
         
-        // Process each T-shape group to find the outermost edge
-        const rawPoints = Array.from(tShapeGroups.values()).map((group, groupIndex) => {
-          if (group.length === 0) return null;
-          
-          // Calculate the bounding box of all T-shape elements
-          let minX = Infinity, maxX = -Infinity;
-          let minY = Infinity, maxY = -Infinity;
-          let centerX = 0, centerY = 0;
-          
-          group.forEach(item => {
-            const el = item.element;
-            centerX += item.x;
-            centerY += item.y;
+        // First pass: find the horizontal and vertical lines for top T-junction
+        Array.from(redElements).forEach((el, index) => {
+          if (el.tagName.toLowerCase() === 'path') {
+            const d = el.getAttribute('d') || '';
+            const parentGroup = el.parentElement;
             
-            if (el.tagName.toLowerCase() === 'line') {
-              const x1 = parseFloat(el.getAttribute('x1') || '0');
-              const y1 = parseFloat(el.getAttribute('y1') || '0');
-              const x2 = parseFloat(el.getAttribute('x2') || '0');
-              const y2 = parseFloat(el.getAttribute('y2') || '0');
+            if (parentGroup) {
+              const transform = parentGroup.getAttribute('transform') || '';
               
-              // Apply transform to get actual positions
-              let currentElement = el;
-              let transformX = 0, transformY = 0;
-              while (currentElement && currentElement !== svg) {
-                const transform = currentElement.getAttribute('transform') || '';
-                const translateMatch = transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
-                if (translateMatch) {
-                  transformX += parseFloat(translateMatch[1]);
-                  transformY += parseFloat(translateMatch[2]);
-                }
-                currentElement = currentElement.parentElement;
+              // Look for horizontal line: transform="translate(24 2) rotate(180 2 0)"
+              if (transform.includes('translate(24 2)') && transform.includes('rotate(180 2 0)')) {
+                console.log('Found TOP T-junction HORIZONTAL line:', transform);
+                horizontalLine = { transform, element: el };
               }
               
-              minX = Math.min(minX, transformX + x1, transformX + x2);
-              maxX = Math.max(maxX, transformX + x1, transformX + x2);
-              minY = Math.min(minY, transformY + y1, transformY + y2);
-              maxY = Math.max(maxY, transformY + y1, transformY + y2);
+              // Look for vertical line: transform="translate(26 0) rotate(180 0 1)"
+              if (transform.includes('translate(26 0)') && transform.includes('rotate(180 0 1)')) {
+                console.log('Found TOP T-junction VERTICAL line:', transform);
+                verticalLine = { transform, element: el };
+              }
             }
-          });
-          
-          centerX /= group.length;
-          centerY /= group.length;
-          
-          // Determine which edge of the T-shape to connect to based on position relative to symbol center
-          const symbolCenterX = data.width / (2 * scaleX);
-          const symbolCenterY = data.height / (2 * scaleY);
-          
-          let connectionX = centerX;
-          let connectionY = centerY;
-          
-          // Move connection point to the edge of the T-shape closest to the symbol edge
-          const dx = centerX - symbolCenterX;
-          const dy = centerY - symbolCenterY;
-          
-          if (Math.abs(dx) > Math.abs(dy)) {
-            // Horizontal connection - move to left or right edge of T-shape
-            connectionX = dx > 0 ? maxX : minX;
-          } else {
-            // Vertical connection - move to top or bottom edge of T-shape
-            connectionY = dy > 0 ? maxY : minY;
-          }
-          
-          // Apply scaling
-          const scaledX = connectionX * scaleX;
-          const scaledY = connectionY * scaleY;
-          
-          return {
-            x: scaledX,
-            y: scaledY,
-            id: `handle-${groupIndex}`
-          };
-        }).filter(Boolean);
-        
-        
-        // Group nearby points (within 5 pixels) to eliminate duplicates
-        const groupedPoints: typeof rawPoints = [];
-        const threshold = 5; // pixels
-        
-        rawPoints.forEach(point => {
-          const existingPoint = groupedPoints.find(p => 
-            Math.abs(p.x - point.x) < threshold && 
-            Math.abs(p.y - point.y) < threshold
-          );
-          
-          if (!existingPoint) {
-            groupedPoints.push(point);
-          } else {
-            // Average the positions for more accuracy
-            existingPoint.x = (existingPoint.x + point.x) / 2;
-            existingPoint.y = (existingPoint.y + point.y) / 2;
           }
         });
         
-        // Re-index the grouped points
-        connectionPoints = groupedPoints.map((point, index) => ({
-          ...point,
-          id: `handle-${index}`
-        }));
+        // Calculate intersection point if both lines found
+        if (horizontalLine && verticalLine) {
+          console.log('Found both horizontal and vertical lines for top T-junction');
+          
+          // Extract coordinates from horizontal line
+          const hTranslateMatch = horizontalLine.transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
+          // Extract coordinates from vertical line  
+          const vTranslateMatch = verticalLine.transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
+          
+          if (hTranslateMatch && vTranslateMatch) {
+            const hTranslateX = parseFloat(hTranslateMatch[1]); // 24
+            const hTranslateY = parseFloat(hTranslateMatch[2]); // 2
+            const vTranslateX = parseFloat(vTranslateMatch[1]); // 26
+            const vTranslateY = parseFloat(vTranslateMatch[2]); // 0
+            
+            // The intersection point is where they meet
+            // Horizontal line center: (24 + 2, 2) = (26, 2) after rotation
+            // Vertical line center: (26, 0 + 1) = (26, 1) after rotation
+            // The actual intersection should be at (26, 2) - where horizontal line meets vertical
+            const intersectionX = vTranslateX; // 26 (X from vertical line position)
+            const intersectionY = hTranslateY; // 2 (Y from horizontal line position)
+            
+            console.log(`T-junction intersection at: (${intersectionX}, ${intersectionY})`);
+            
+            // Account for the main group transform translate(6.5 18.5)
+            const mainGroupOffsetX = 6.5;
+            const mainGroupOffsetY = 18.5;
+            
+            const absoluteX = mainGroupOffsetX + intersectionX; // 6.5 + 26 = 32.5
+            const absoluteY = mainGroupOffsetY + intersectionY; // 18.5 + 2 = 20.5
+            
+            console.log(`Absolute T-junction intersection: (${absoluteX}, ${absoluteY})`);
+            
+            // Scale to actual symbol size
+            const scaledX = absoluteX * scaleX;
+            const scaledY = absoluteY * scaleY;
+            
+            topTJunctionPoint = {
+              x: scaledX,
+              y: scaledY,
+              id: 'handle-top'
+            };
+            
+            console.log(`Final scaled intersection: (${scaledX}, ${scaledY})`);
+            console.log(`Symbol dimensions: ${data.width}x${data.height}, Scale: ${scaleX}x${scaleY}`);
+          }
+        }
+        
+        // For now, use only the top T-junction if found
+        if (topTJunctionPoint) {
+          connectionPoints = [topTJunctionPoint];
+          console.log('Using top T-junction:', topTJunctionPoint);
+        } else {
+          console.log('No top T-junction found, using fallback');
+          connectionPoints = []; // Will trigger fallback handles
+        }
+        // Skip the complex logic for now - we're testing simple approach
         
         // Debug logging to understand connection points (disabled for performance)
         // console.log(`Node ${id} connection points:`, connectionPoints.length, connectionPoints);
@@ -466,77 +409,106 @@
   <!-- Each position has BOTH source and target handles for bidirectional connections -->
   <!-- Handles are dynamically enabled based on connection state -->
   
-  <!-- Top Handle (source + target) -->
-  <Handle
-    type="source"
-    position={Position.Top}
-    id="handle-0"
-    style="left: 50%; top: 0%;"
-    class="connection-handle connection-handle-source"
-    isConnectable={sourceHandlesEnabled}
-  />
-  <Handle
-    type="target"
-    position={Position.Top}
-    id="handle-0"
-    style="left: 50%; top: 0%;"
-    class="connection-handle connection-handle-target"
-    isConnectable={targetHandlesEnabled}
-  />
+  <!-- Store T-intersection depths for each handle direction -->
+  <div style="display:none" 
+       data-t-depth-top="{connectionPoints.find(p => p.y < data.height * 0.4)?.edgeDistance || 12}"
+       data-t-depth-right="{connectionPoints.find(p => p.x > data.width * 0.6)?.edgeDistance || 12}"
+       data-t-depth-bottom="{connectionPoints.find(p => p.y > data.height * 0.6)?.edgeDistance || 12}"
+       data-t-depth-left="{connectionPoints.find(p => p.x < data.width * 0.4)?.edgeDistance || 12}"
+       data-node-id="{id}"
+       id="t-depths-{id}">
+  </div>
   
-  <!-- Right Handle (source + target) -->
-  <Handle
-    type="source"
-    position={Position.Right}
-    id="handle-1"
-    style="left: 100%; top: 50%;"
-    class="connection-handle connection-handle-source"
-    isConnectable={sourceHandlesEnabled}
-  />
-  <Handle
-    type="target"
-    position={Position.Right}
-    id="handle-1"
-    style="left: 100%; top: 50%;"
-    class="connection-handle connection-handle-target"
-    isConnectable={targetHandlesEnabled}
-  />
+  <!-- Dynamic handles positioned at actual T-junction points -->
+  {#each connectionPoints as point, index}
+    <!-- Determine handle position based on location -->
+    {@const handlePosition = getHandlePosition(point)}
+    
+    <!-- Source handle at T-junction -->
+    <Handle
+      type="source"
+      position={handlePosition}
+      id="handle-{index}"
+      style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    
+    <!-- Target handle at T-junction (overlapping) -->
+    <Handle
+      type="target"
+      position={handlePosition}
+      id="handle-{index}"
+      style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%;"
+      isConnectable={targetHandlesEnabled}
+    />
+  {/each}
   
-  <!-- Bottom Handle (source + target) -->
-  <Handle
-    type="source"
-    position={Position.Bottom}
-    id="handle-2"
-    style="left: 50%; top: 100%;"
-    class="connection-handle connection-handle-source"
-    isConnectable={sourceHandlesEnabled}
-  />
-  <Handle
-    type="target"
-    position={Position.Bottom}
-    id="handle-2"
-    style="left: 50%; top: 100%;"
-    class="connection-handle connection-handle-target"
-    isConnectable={targetHandlesEnabled}
-  />
-  
-  <!-- Left Handle (source + target) -->
-  <Handle
-    type="source"
-    position={Position.Left}
-    id="handle-3"
-    style="left: 0%; top: 50%;"
-    class="connection-handle connection-handle-source"
-    isConnectable={sourceHandlesEnabled}
-  />
-  <Handle
-    type="target"
-    position={Position.Left}
-    id="handle-3"
-    style="left: 0%; top: 50%;"
-    class="connection-handle connection-handle-target"
-    isConnectable={targetHandlesEnabled}
-  />
+  <!-- Fallback handles if no T-junctions detected -->
+  {#if connectionPoints.length === 0}
+    <!-- Top Handle -->
+    <Handle
+      type="source"
+      position={Position.Top}
+      id="handle-0"
+      style="left: 50%; top: 0%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Top}
+      id="handle-0"
+      style="left: 50%; top: 0%;"
+      isConnectable={targetHandlesEnabled}
+    />
+    
+    <!-- Right Handle -->
+    <Handle
+      type="source"
+      position={Position.Right}
+      id="handle-1"
+      style="left: 100%; top: 50%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Right}
+      id="handle-1"
+      style="left: 100%; top: 50%;"
+      isConnectable={targetHandlesEnabled}
+    />
+    
+    <!-- Bottom Handle -->
+    <Handle
+      type="source"
+      position={Position.Bottom}
+      id="handle-2"
+      style="left: 50%; top: 100%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Bottom}
+      id="handle-2"
+      style="left: 50%; top: 100%;"
+      isConnectable={targetHandlesEnabled}
+    />
+    
+    <!-- Left Handle -->
+    <Handle
+      type="source"
+      position={Position.Left}
+      id="handle-3"
+      style="left: 0%; top: 50%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Left}
+      id="handle-3"
+      style="left: 0%; top: 50%;"
+      isConnectable={targetHandlesEnabled}
+    />
+  {/if}
   
   <!-- Label and Tag -->
   {#if data.showLabel !== false}
@@ -732,7 +704,7 @@
     opacity: 0 !important;
     pointer-events: all;
     /* Add subtle indicator on hover for better feedback */
-    transition: opacity 0.2s, transform 0.2s;
+    /* Removed transition to prevent drag stuttering */
   }
   
   /* Create larger hit area using ::before pseudo-element */
@@ -774,10 +746,11 @@
     background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%) !important;
   }
   
-  /* Ensure both source and target handles overlap perfectly */
+  /* Ensure both source and target handles overlap perfectly and are below edges */
   :global(.connection-handle-source),
   :global(.connection-handle-target) {
     position: absolute;
+    z-index: 100 !important; /* Below edges (which are z-index 9999) */
   }
   
   /* Make valid connection targets more prominent during dragging */
@@ -809,7 +782,7 @@
   
   /* Show the actual red T-shapes from SVG on hover */
   .symbol-content :global(.connection-indicator) {
-    transition: opacity 0.2s, stroke 0.2s;
+    /* Removed transition to prevent drag stuttering */
   }
   
   /* Show red T-shapes in blue when hovering over the node */

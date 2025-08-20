@@ -16,9 +16,62 @@
   export let markerStart: $$Props['markerStart'] = undefined;
   export let data: $$Props['data'] = undefined;
 
-  // Extract offset values from data - use larger offsets to penetrate INTO symbols
-  $: offsetStart = data?.offsetStart || 15;
-  $: offsetEnd = data?.offsetEnd || 15;
+  // Get T-intersection depth from DOM for precise connection
+  function getTIntersectionDepth(nodeId, position) {
+    try {
+      const depthElement = document.getElementById(`t-depths-${nodeId}`);
+      if (!depthElement) return 12; // Fallback
+      
+      const positionMap = {
+        'top': 'data-t-depth-top',
+        'right': 'data-t-depth-right', 
+        'bottom': 'data-t-depth-bottom',
+        'left': 'data-t-depth-left'
+      };
+      
+      const depth = depthElement.getAttribute(positionMap[position]);
+      return parseFloat(depth) || 12;
+    } catch (error) {
+      return 12; // Fallback on error
+    }
+  }
+  
+  // Auto-calculate optimal offset based on T-intersection position
+  function calculateOptimalOffset(nodeData, nodeId, position) {
+    // First try to get exact T-intersection depth
+    if (nodeId && position) {
+      const tDepth = getTIntersectionDepth(nodeId, position);
+      // Add small buffer to ensure we reach the T-intersection
+      return Math.max(8, Math.min(tDepth + 2, 30));
+    }
+    
+    // Fallback to symbol-based calculation
+    let offset = 12;
+    
+    // Adjust based on symbol size (larger symbols need more offset)
+    if (nodeData?.width) {
+      const sizeRatio = nodeData.width / 60; // 60px is default size
+      offset = Math.round(12 * sizeRatio); // Scale offset proportionally
+    }
+    
+    // Adjust for stroke width (thicker strokes need more offset)
+    if (nodeData?.strokeWidth) {
+      offset += Math.round(nodeData.strokeWidth);
+    }
+    
+    // Ensure minimum and maximum bounds
+    return Math.max(8, Math.min(offset, 25)); // Between 8px and 25px
+  }
+  
+  // Get node data if available (would need to be passed from parent)
+  $: sourceNodeData = data?.sourceNodeData;
+  $: targetNodeData = data?.targetNodeData;
+  $: sourceNodeId = data?.sourceNodeId;
+  $: targetNodeId = data?.targetNodeId;
+  
+  // Since handles are now positioned exactly at T-junctions, no offset needed for flush connections
+  $: offsetStart = 0; // No offset - handles are at precise T-junction positions
+  $: offsetEnd = 0;   // No offset - handles are at precise T-junction positions
 
   // Calculate extended path with offsets using step path
   $: extendedPath = (() => {
@@ -29,27 +82,27 @@
     let extendedTargetY = targetY;
     
     // Extend INTO the source symbol based on source position
-    // Positive offset extends the edge INTO the symbol (past the handle point)
-    if (sourcePosition === 0) { // Top - edge coming OUT from top
-      extendedSourceY = sourceY - offsetStart; // Move up into symbol
-    } else if (sourcePosition === 1) { // Right - edge coming OUT from right
-      extendedSourceX = sourceX + offsetStart; // Move right into symbol
-    } else if (sourcePosition === 2) { // Bottom - edge coming OUT from bottom
-      extendedSourceY = sourceY + offsetStart; // Move down into symbol
-    } else if (sourcePosition === 3) { // Left - edge coming OUT from left
-      extendedSourceX = sourceX - offsetStart; // Move left into symbol
+    // Handles are at the edge, we need to move INWARD toward center
+    if (sourcePosition === 'top') {
+      extendedSourceY = sourceY + offsetStart; // Move DOWN into symbol
+    } else if (sourcePosition === 'right') {
+      extendedSourceX = sourceX - offsetStart; // Move LEFT into symbol
+    } else if (sourcePosition === 'bottom') {
+      extendedSourceY = sourceY - offsetStart; // Move UP into symbol
+    } else if (sourcePosition === 'left') {
+      extendedSourceX = sourceX + offsetStart; // Move RIGHT into symbol
     }
     
-    // Extend INTO the target symbol based on target position  
-    // Positive offset extends the edge INTO the symbol (past the handle point)
-    if (targetPosition === 0) { // Top - edge coming IN from top
-      extendedTargetY = targetY - offsetEnd; // Move up into symbol
-    } else if (targetPosition === 1) { // Right - edge coming IN from right
-      extendedTargetX = targetX + offsetEnd; // Move right into symbol
-    } else if (targetPosition === 2) { // Bottom - edge coming IN from bottom
-      extendedTargetY = targetY + offsetEnd; // Move down into symbol
-    } else if (targetPosition === 3) { // Left - edge coming IN from left
-      extendedTargetX = targetX - offsetEnd; // Move left into symbol
+    // Extend INTO the target symbol based on target position
+    // Handles are at the edge, we need to move INWARD toward center
+    if (targetPosition === 'top') {
+      extendedTargetY = targetY + offsetEnd; // Move DOWN into symbol
+    } else if (targetPosition === 'right') {
+      extendedTargetX = targetX - offsetEnd; // Move LEFT into symbol
+    } else if (targetPosition === 'bottom') {
+      extendedTargetY = targetY - offsetEnd; // Move UP into symbol
+    } else if (targetPosition === 'left') {
+      extendedTargetX = targetX + offsetEnd; // Move RIGHT into symbol
     }
     
     return getSmoothStepPath({

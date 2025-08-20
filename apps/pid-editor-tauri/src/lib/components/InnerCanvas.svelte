@@ -139,6 +139,10 @@
   
   // Convert diagram connections to edges - don't create any edges until ready
   $: edges = canCreateEdges ? $diagram.connections.map(conn => {
+      // Find source and target nodes to get their data
+      const sourceNode = nodes.find(n => n.id === conn.from.elementId);
+      const targetNode = nodes.find(n => n.id === conn.to.elementId);
+      
       return {
         id: conn.id,
         source: conn.from.elementId,
@@ -156,10 +160,13 @@
           color: conn.style.strokeColor || '#000000'
         },
         interactionWidth: 0,
-        // Offsets to eliminate gaps between edges and symbols
+        // Pass node data for auto-calculation of offsets using T-intersection depths
         data: { 
-          offsetStart: 15,  // Extends 15px INTO source symbol
-          offsetEnd: 15     // Extends 15px INTO target symbol
+          sourceNodeData: sourceNode?.data,  // Pass source node data
+          targetNodeData: targetNode?.data,  // Pass target node data
+          sourceNodeId: conn.from.elementId, // Pass source node ID for T-depth lookup
+          targetNodeId: conn.to.elementId    // Pass target node ID for T-depth lookup
+          // offsetStart and offsetEnd will be auto-calculated based on T-intersection positions
         }
       };
     }) : [];
@@ -177,26 +184,40 @@
 
   // Handle node drag
   function handleNodeDragStop(event: CustomEvent) {
-    const node = event.detail.node;    
+    const node = event.detail.node;
+    
     // Apply snap to grid if enabled
-    const snappedPosition = snapToGrid(node.position);    
+    const snappedPosition = snapToGrid(node.position);
+    
+    // Only update if position actually changed after snapping
+    const currentNode = nodes.find(n => n.id === node.id);
+    if (!currentNode || 
+        (currentNode.position.x === snappedPosition.x && 
+         currentNode.position.y === snappedPosition.y)) {
+      return; // No change needed
+    }
+    
     updatingNodes = true;
     
+    // Update local nodes array with snapped position
     nodes = nodes.map(n => 
       n.id === node.id 
         ? { ...n, position: snappedPosition }
         : n
     );
     
+    // Update diagram store with center position
     const newX = snappedPosition.x + node.data.width / 2;
-    const newY = snappedPosition.y + node.data.height / 2;    
+    const newY = snappedPosition.y + node.data.height / 2;
     diagram.updateElement(node.id, {
       x: newX,
       y: newY
     });
     
     setTimeout(() => {
-      updatingNodes = false;    }, 100);  }
+      updatingNodes = false;
+    }, 50); // Reduced timeout for faster response
+  }
 
   // Validate connections
   function isValidConnection(connection: any) {
@@ -765,15 +786,12 @@
       const connectionEvent = new CustomEvent('connection-end');
       window.dispatchEvent(connectionEvent);
     }}
-    onnodedrag={(event) => {      const node = event?.nodes?.[0] || event;
-      if (node && node.id) {        nodes = nodes.map(n => 
-          n.id === node.id 
-            ? { ...n, position: node.position }
-            : n
-        );
-      }
+    onnodedrag={(event) => {
+      // Don't update nodes during drag - let React Flow handle the dragging smoothly
+      // We'll update our state only when drag stops
     }}
-    onnodedragstop={(event) => {      const node = event?.nodes?.[0] || event;
+    onnodedragstop={(event) => {
+      const node = event?.nodes?.[0] || event;
       if (node && node.id) {
         handleNodeDragStop({ detail: { node } });
       }
@@ -928,16 +946,22 @@
   }
   
   :global(.svelte-flow__edges) {
-    z-index: 1000 !important;
+    z-index: 9999 !important; /* Edges on top of everything */
   }
   
   :global(.svelte-flow__edge) {
-    z-index: 1000 !important;
+    z-index: 9999 !important; /* Edges on top of everything */
     pointer-events: all !important; /* Ensure edges are interactive */
   }
   
   :global(.svelte-flow__nodes) {
     z-index: 1 !important;
+  }
+  
+  :global(.svelte-flow__node) {
+    z-index: 1 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
   
   :global(.svelte-flow__node) {
