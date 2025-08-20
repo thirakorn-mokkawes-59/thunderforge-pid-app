@@ -5,6 +5,7 @@
   import { diagram } from '$lib/stores/diagram';
   import { UI_CONSTANTS } from '$lib/constants/ui';
   import { writable } from 'svelte/store';
+  import { handleVisibility } from '$lib/stores/handleVisibility';
   
   type $$Props = NodeProps;
   
@@ -106,12 +107,20 @@
         // Improved approach: find T-shape groups and calculate connection edge
         const tShapeGroups = new Map();
         
-        // Find the top T-junction by detecting both horizontal and vertical lines
-        let topTJunctionPoint = null;
-        let horizontalLine = null;
-        let verticalLine = null;
+        // Detect symbol type based on path or name
+        const isTankFloatingRoof = data.symbolPath?.includes('tank_floating_roof');
+        const isVesselGeneral = data.symbolPath?.includes('vessel_general');
+        const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
         
-        // First pass: find the horizontal and vertical lines for top T-junction
+        // Find all 4 T-junctions based on symbol type
+        const tJunctions = {
+          top: { h: null, v: null },
+          right: { h: null, v: null },
+          bottom: { h: null, v: null },
+          left: { h: null, v: null }
+        };
+        
+        // First pass: find all horizontal and vertical lines for each T-junction
         Array.from(redElements).forEach((el, index) => {
           if (el.tagName.toLowerCase() === 'path') {
             const d = el.getAttribute('d') || '';
@@ -120,75 +129,224 @@
             if (parentGroup) {
               const transform = parentGroup.getAttribute('transform') || '';
               
-              // Look for horizontal line: transform="translate(24 2) rotate(180 2 0)"
-              if (transform.includes('translate(24 2)') && transform.includes('rotate(180 2 0)')) {
-                console.log('Found TOP T-junction HORIZONTAL line:', transform);
-                horizontalLine = { transform, element: el };
-              }
-              
-              // Look for vertical line: transform="translate(26 0) rotate(180 0 1)"
-              if (transform.includes('translate(26 0)') && transform.includes('rotate(180 0 1)')) {
-                console.log('Found TOP T-junction VERTICAL line:', transform);
-                verticalLine = { transform, element: el };
+              if (isTankFloatingRoof) {
+                // Tank Floating Roof specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(24 2)') && transform.includes('rotate(180 2 0)')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(26 0)') && transform.includes('rotate(180 0 1)')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 14)') && transform.includes('rotate(90 2 0)')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 13)') && transform.includes('rotate(90 0 1)')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(48 14)') && transform.includes('rotate(270 2 0)')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(51 13)') && transform.includes('rotate(270 0 1)')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(24 28)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(26 28)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+              } else if (isVesselGeneral) {
+                // Vessel General specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(11 2)') && transform.includes('rotate(180 2 0)')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(13 0)') && transform.includes('rotate(180 0 1)')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 24)') && transform.includes('rotate(90 2 0)')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 23)') && transform.includes('rotate(90 0 1)')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(22 24)') && transform.includes('rotate(270 2 0)')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(25 23)') && transform.includes('rotate(270 0 1)')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(11 46)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(13 46)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+              } else if (isTankGeneralBasin) {
+                // Tank General Basin specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(23 2)') && transform.includes('rotate(180 2 0)')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(25 0)') && transform.includes('rotate(180 0 1)')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction  
+                if (transform.includes('translate(1 19)') && transform.includes('rotate(90 2 0)')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(2 18)') && transform.includes('rotate(90 0 1)')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(45 19)') && transform.includes('rotate(270 2 0)')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(48 18)') && transform.includes('rotate(270 0 1)')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(23 36)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(25 36)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
               }
             }
           }
         });
         
-        // Calculate intersection point if both lines found
-        if (horizontalLine && verticalLine) {
-          console.log('Found both horizontal and vertical lines for top T-junction');
-          
-          // Extract coordinates from horizontal line
-          const hTranslateMatch = horizontalLine.transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
-          // Extract coordinates from vertical line  
-          const vTranslateMatch = verticalLine.transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
-          
-          if (hTranslateMatch && vTranslateMatch) {
-            const hTranslateX = parseFloat(hTranslateMatch[1]); // 24
-            const hTranslateY = parseFloat(hTranslateMatch[2]); // 2
-            const vTranslateX = parseFloat(vTranslateMatch[1]); // 26
-            const vTranslateY = parseFloat(vTranslateMatch[2]); // 0
-            
-            // The intersection point is where they meet
-            // Horizontal line center: (24 + 2, 2) = (26, 2) after rotation
-            // Vertical line center: (26, 0 + 1) = (26, 1) after rotation
-            // The actual intersection should be at (26, 2) - where horizontal line meets vertical
-            const intersectionX = vTranslateX; // 26 (X from vertical line position)
-            const intersectionY = hTranslateY; // 2 (Y from horizontal line position)
-            
-            console.log(`T-junction intersection at: (${intersectionX}, ${intersectionY})`);
-            
-            // Account for the main group transform translate(6.5 18.5)
-            const mainGroupOffsetX = 6.5;
-            const mainGroupOffsetY = 18.5;
-            
-            const absoluteX = mainGroupOffsetX + intersectionX; // 6.5 + 26 = 32.5
-            const absoluteY = mainGroupOffsetY + intersectionY; // 18.5 + 2 = 20.5
-            
-            console.log(`Absolute T-junction intersection: (${absoluteX}, ${absoluteY})`);
-            
-            // Scale to actual symbol size
-            const scaledX = absoluteX * scaleX;
-            const scaledY = absoluteY * scaleY;
-            
-            topTJunctionPoint = {
-              x: scaledX,
-              y: scaledY,
-              id: 'handle-top'
-            };
-            
-            console.log(`Final scaled intersection: (${scaledX}, ${scaledY})`);
-            console.log(`Symbol dimensions: ${data.width}x${data.height}, Scale: ${scaleX}x${scaleY}`);
-          }
+        // Calculate intersection points for each T-junction
+        const junctionPoints = [];
+        // Different main group offsets for different symbols
+        let mainGroupOffsetX = 0;
+        let mainGroupOffsetY = 0;
+        
+        if (isTankFloatingRoof) {
+          mainGroupOffsetX = 6.5;
+          mainGroupOffsetY = 18.5;
+        } else if (isVesselGeneral) {
+          mainGroupOffsetX = 19.5;
+          mainGroupOffsetY = 8.5;
+        } else if (isTankGeneralBasin) {
+          mainGroupOffsetX = 7.5;
+          mainGroupOffsetY = 13.5;
         }
         
-        // For now, use only the top T-junction if found
-        if (topTJunctionPoint) {
-          connectionPoints = [topTJunctionPoint];
-          console.log('Using top T-junction:', topTJunctionPoint);
+        // Process each T-junction
+        Object.entries(tJunctions).forEach(([position, junction]) => {
+          if (junction.h && junction.v) {
+            console.log(`Processing ${position} T-junction`);
+            
+            // Extract coordinates
+            const hMatch = junction.h.transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
+            const vMatch = junction.v.transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
+            
+            if (hMatch && vMatch) {
+              const hX = parseFloat(hMatch[1]);
+              const hY = parseFloat(hMatch[2]);
+              const vX = parseFloat(vMatch[1]);
+              const vY = parseFloat(vMatch[2]);
+              
+              // Calculate intersection based on position and symbol type
+              let intersectionX, intersectionY;
+              
+              if (isTankFloatingRoof) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (26)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T (0 + 1 = 1)
+                  intersectionY = hY; // Use horizontal line Y (14)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (48 + 1.5 = 49.5)
+                  intersectionY = hY; // Use horizontal line Y (14)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (26)
+                  intersectionY = hY; // Use horizontal line Y (28)
+                }
+              } else if (isVesselGeneral) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (13)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T (0 + 1 = 1)
+                  intersectionY = hY; // Use horizontal line Y (24)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (22 + 1.5 = 23.5)
+                  intersectionY = hY; // Use horizontal line Y (24)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (13)
+                  intersectionY = hY; // Use horizontal line Y (46)
+                }
+              } else if (isTankGeneralBasin) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (25)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T (1 + 1 = 2)
+                  intersectionY = hY; // Use horizontal line Y (19)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (45 + 1.5 = 46.5)
+                  intersectionY = hY; // Use horizontal line Y (19)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (25)
+                  intersectionY = hY; // Use horizontal line Y (36)
+                }
+              }
+              
+              // Apply main group offset
+              const absoluteX = mainGroupOffsetX + intersectionX;
+              const absoluteY = mainGroupOffsetY + intersectionY;
+              
+              // Scale to actual symbol size
+              const scaledX = absoluteX * scaleX;
+              const scaledY = absoluteY * scaleY;
+              
+              // Determine Position enum value
+              let positionEnum;
+              if (position === 'top') positionEnum = Position.Top;
+              else if (position === 'right') positionEnum = Position.Right;
+              else if (position === 'bottom') positionEnum = Position.Bottom;
+              else if (position === 'left') positionEnum = Position.Left;
+              
+              junctionPoints.push({
+                x: scaledX,
+                y: scaledY,
+                id: `handle-${junctionPoints.length}`,
+                position: positionEnum
+              });
+              
+              console.log(`${position} T-junction at (${scaledX}, ${scaledY})`);
+            }
+          }
+        });
+        
+        // Use all detected T-junction points
+        if (junctionPoints.length > 0) {
+          connectionPoints = junctionPoints;
+          console.log(`Using ${junctionPoints.length} T-junctions for ${id}`);
         } else {
-          console.log('No top T-junction found, using fallback');
+          console.log('No T-junctions found, using fallback');
           connectionPoints = []; // Will trigger fallback handles
         }
         // Skip the complex logic for now - we're testing simple approach
@@ -420,31 +578,35 @@
   </div>
   
   <!-- Dynamic handles positioned at actual T-junction points -->
-  {#each connectionPoints as point, index}
-    <!-- Determine handle position based on location -->
-    {@const handlePosition = getHandlePosition(point)}
-    
-    <!-- Source handle at T-junction -->
-    <Handle
-      type="source"
-      position={handlePosition}
-      id="handle-{index}"
-      style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%;"
-      isConnectable={sourceHandlesEnabled}
-    />
-    
-    <!-- Target handle at T-junction (overlapping) -->
-    <Handle
-      type="target"
-      position={handlePosition}
-      id="handle-{index}"
-      style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%;"
-      isConnectable={targetHandlesEnabled}
-    />
-  {/each}
+  {#if $handleVisibility}
+    {#each connectionPoints as point, index}
+      <!-- Use position from point if available, otherwise calculate it -->
+      {@const handlePosition = point.position || getHandlePosition(point)}
+      
+      <!-- Source handle at T-junction -->
+      <Handle
+        type="source"
+        position={handlePosition}
+        id={point.id}
+        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%; transform: translate(-50%, -50%);"
+        class="connection-handle connection-handle-source"
+        isConnectable={sourceHandlesEnabled}
+      />
+      
+      <!-- Target handle at T-junction (overlapping) -->
+      <Handle
+        type="target"
+        position={handlePosition}
+        id={point.id}
+        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%; transform: translate(-50%, -50%);"
+        class="connection-handle connection-handle-target"
+        isConnectable={targetHandlesEnabled}
+      />
+    {/each}
+  {/if}
   
   <!-- Fallback handles if no T-junctions detected -->
-  {#if connectionPoints.length === 0}
+  {#if connectionPoints.length === 0 && $handleVisibility}
     <!-- Top Handle -->
     <Handle
       type="source"
@@ -690,21 +852,18 @@
     top: 50%;
   }
   
-  /* Connection handles - small actual handle for precise connection */
+  /* Connection handles - visible circular handles */
   :global(.connection-handle) {
-    /* Small handle for precise edge connection */
-    width: 1px !important;
-    height: 1px !important;
-    background: transparent !important;
-    border: none !important;
-    /* Center the handle exactly on the T-shape */
-    transform: translate(-50%, -50%);
+    /* Visible handle for connection */
+    width: 8px !important;
+    height: 8px !important;
+    background: #fff !important;
+    border: 2px solid #555 !important;
+    border-radius: 50% !important;
     overflow: visible !important;
     cursor: crosshair;
-    opacity: 0 !important;
     pointer-events: all;
-    /* Add subtle indicator on hover for better feedback */
-    /* Removed transition to prevent drag stuttering */
+    z-index: 100 !important;
   }
   
   /* Create larger hit area using ::before pseudo-element */

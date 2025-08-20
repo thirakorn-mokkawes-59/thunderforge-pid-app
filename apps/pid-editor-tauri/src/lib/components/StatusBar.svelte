@@ -2,10 +2,11 @@
   import { diagram } from '$lib/stores/diagram';
   import { history } from '$lib/stores/history';
   import { ui } from '$lib/stores/ui';
+  import { handleVisibility } from '$lib/stores/handleVisibility';
   import { Magnet } from '$lib/icons';
   import PanelLeft from '$lib/icons/PanelLeft.svelte';
   import PanelRight from '$lib/icons/PanelRight.svelte';
-  import { Plus, Minus, Maximize2, Lock, Unlock } from 'lucide-svelte';
+  import { Plus, Minus, Maximize2, Lock, Unlock, Circle } from 'lucide-svelte';
   
   let canUndo = false;
   let canRedo = false;
@@ -70,6 +71,10 @@
     window.dispatchEvent(new CustomEvent('toggle-lock', { 
       detail: { locked: isLocked } 
     }));
+  }
+  
+  function handleToggleHandles() {
+    handleVisibility.toggle();
   }
 </script>
 
@@ -151,6 +156,15 @@
   </div>
   
   <div class="status-right">
+    <button 
+      class="status-button" 
+      class:active={$handleVisibility}
+      on:click={handleToggleHandles}
+      title={$handleVisibility ? "Hide Handles" : "Show Handles"}
+      aria-label={$handleVisibility ? "Hide Handles" : "Show Handles"}
+    >
+      <Circle size={14} strokeWidth={2} fill={$handleVisibility ? "currentColor" : "none"} />
+    </button>
     <button 
       class="status-button" 
       disabled={!canUndo}
