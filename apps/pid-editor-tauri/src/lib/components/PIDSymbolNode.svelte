@@ -36,6 +36,15 @@
   }
   
   onMount(() => {
+    console.log(`[PIDSymbolNode ${id}] onMount - Initial state:`, {
+      id,
+      width: data.width,
+      height: data.height,
+      name: data.name,
+      labelOffset: { x: data.labelOffsetX, y: data.labelOffsetY },
+      tagOffset: { x: data.tagOffsetX, y: data.tagOffsetY }
+    });
+    
     window.addEventListener('connection-start', handleConnectionStart as EventListener);
     window.addEventListener('connection-end', handleConnectionEnd as EventListener);
   });
@@ -55,6 +64,20 @@
   let svgContent = '';
   let connectionPoints: Array<{x: number, y: number, id: string}> = [];
   let isLoading = true;
+  let renderCount = 0;
+  
+  // Track renders and position changes
+  $: {
+    renderCount++;
+    if (renderCount <= 5 || renderCount % 10 === 0) {
+      console.log(`[PIDSymbolNode ${id}] Render #${renderCount}:`, {
+        dataPosition: { x: data.x, y: data.y },
+        size: { width: data.width, height: data.height },
+        handles: connectionPoints.length,
+        labelOffset: { x: data.labelOffsetX || 0, y: data.labelOffsetY || 0 }
+      });
+    }
+  }
   
   // Track active timeouts and animation frames for cleanup
   let activeTimeouts: Set<number> = new Set();
@@ -63,6 +86,26 @@
   
   // Load SVG and parse connection points - only on path change
   $: if (data.symbolPath && !svgContent) loadSvg(data.symbolPath);
+  
+  // Debug label and tag positioning on data change
+  $: if (id && (data.showLabel !== false || data.tag)) {
+    console.log(`[PIDSymbolNode ${id}] Label/Tag render:`, {
+      timestamp: Date.now(),
+      label: data.showLabel !== false ? {
+        visible: true,
+        text: data.name,
+        offsetX: data.labelOffsetX || 0,
+        offsetY: data.labelOffsetY || 0
+      } : { visible: false },
+      tag: data.tag ? {
+        visible: true,
+        text: data.tag,
+        position: data.tagPosition || 'below',
+        offsetX: data.tagOffsetX || 0,
+        offsetY: data.tagOffsetY || 0
+      } : { visible: false }
+    });
+  }
   
   // Update stroke width and linecap when they change
   $: if (svgContent && (nodeStrokeWidth !== undefined || nodeStrokeLinecap !== undefined)) {
@@ -354,7 +397,13 @@
                 position: positionEnum
               });
               
-              console.log(`${position} T-junction at (${scaledX}, ${scaledY})`);
+              console.log(`[PIDSymbolNode ${id}] ${position} handle at:`, {
+                position,
+                scaledX: scaledX.toFixed(2),
+                scaledY: scaledY.toFixed(2),
+                adjustment: position === 'left' || position === 'right' ? '+0.7px' : 'none',
+                finalX: scaledX.toFixed(2)
+              });
             }
           }
         });
