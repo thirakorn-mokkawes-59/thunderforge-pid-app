@@ -65,6 +65,7 @@
   let connectionPoints: Array<{x: number, y: number, id: string}> = [];
   let isLoading = true;
   let renderCount = 0;
+  let initialDetectionComplete = false;
   
   // Track renders and position changes
   $: {
@@ -85,7 +86,13 @@
   let abortController: AbortController | null = null;
   
   // Load SVG and parse connection points - only on path change
-  $: if (data.symbolPath && !svgContent) loadSvg(data.symbolPath);
+  $: if (data.symbolPath && !svgContent) {
+    loadSvg(data.symbolPath);
+  } else if (!data.symbolPath && !initialDetectionComplete) {
+    // No symbol path - mark detection as complete with no points
+    initialDetectionComplete = true;
+    connectionPoints = [];
+  }
   
   // Debug label and tag positioning on data change
   $: if (id && (data.showLabel !== false || data.tag)) {
@@ -416,6 +423,9 @@
           console.log('No T-junctions found, using fallback');
           connectionPoints = []; // Will trigger fallback handles
         }
+        
+        // Mark initial detection as complete
+        initialDetectionComplete = true;
         // Skip the complex logic for now - we're testing simple approach
         
         // Debug logging to understand connection points (disabled for performance)
@@ -480,6 +490,11 @@
           console.error('Failed to load SVG:', error);
         }
         isLoading = false;
+        // Mark detection as complete even on error
+        if (!initialDetectionComplete) {
+          initialDetectionComplete = true;
+          connectionPoints = [];
+        }
       }
     }
   }
@@ -645,7 +660,7 @@
   </div>
   
   <!-- Dynamic handles positioned at actual T-junction points -->
-  {#if $handleVisibility}
+  {#if $handleVisibility && initialDetectionComplete}
     {#each connectionPoints as point, index}
       <!-- Use position from point if available, otherwise calculate it -->
       {@const handlePosition = point.position || getHandlePosition(point)}
@@ -673,7 +688,7 @@
   {/if}
   
   <!-- Fallback handles if no T-junctions detected -->
-  {#if connectionPoints.length === 0 && $handleVisibility}
+  {#if initialDetectionComplete && connectionPoints.length === 0 && $handleVisibility}
     <!-- Top Handle -->
     <Handle
       type="source"
