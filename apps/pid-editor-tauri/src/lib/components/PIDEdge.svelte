@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getSmoothStepPath } from '@xyflow/svelte';
-  import { onMount } from 'svelte';
   import type { EdgeProps } from '@xyflow/svelte';
+  import { onMount } from 'svelte';
 
   type $$Props = EdgeProps;
 
@@ -15,94 +15,90 @@
   export let style: $$Props['style'] = '';
   export let data: $$Props['data'] = {};
   export let label: $$Props['label'] = undefined;
+  
+  // Track if component is mounted to ensure fresh calculations
+  let mounted = false;
+  let initialized = false;
+  
+  onMount(() => {
+    mounted = true;
+    // Force immediate recalculation on mount to override any cached positions
+    setTimeout(() => {
+      initialized = true;
+      recalculatePath();
+    }, 0);
+    
+    return () => {
+      mounted = false;
+      initialized = false;
+    };
+  });
 
   // Configuration constants
   const HANDLE_OFFSET = 4;  // Offset from handle border (half of 8px handle)
   const ARROW_LENGTH = 8.8;   // Length of arrow (from SVG)
   const ARROW_WIDTH = 7;     // Width of arrow (from SVG)
   
-  // Adjust source position
+  let edgePath = '';
   let adjSourceX = sourceX;
   let adjSourceY = sourceY;
-  if (sourcePosition === 'left') adjSourceX += HANDLE_OFFSET;
-  else if (sourcePosition === 'right') adjSourceX -= HANDLE_OFFSET;
-  else if (sourcePosition === 'top') adjSourceY += HANDLE_OFFSET;
-  else if (sourcePosition === 'bottom') adjSourceY -= HANDLE_OFFSET;
-  
-  // Adjust target position - same as source calculation, then subtract arrow length
-  // First apply handle offset (same as source), then pull back by arrow length
   let adjTargetX = targetX;
   let adjTargetY = targetY;
   
-  if (targetPosition === 'left') {
-    // First apply handle offset, then subtract arrow length
-    adjTargetX = targetX + HANDLE_OFFSET - ARROW_LENGTH;
-  } else if (targetPosition === 'right') {
-    // First apply handle offset, then subtract arrow length
-    adjTargetX = targetX - HANDLE_OFFSET + ARROW_LENGTH;
-  } else if (targetPosition === 'top') {
-    // First apply handle offset, then subtract arrow length
-    adjTargetY = targetY + HANDLE_OFFSET - ARROW_LENGTH;
-  } else if (targetPosition === 'bottom') {
-    // First apply handle offset, then subtract arrow length
-    adjTargetY = targetY - HANDLE_OFFSET + ARROW_LENGTH;
+  function recalculatePath() {
+    // Adjust source position
+    adjSourceX = sourceX;
+    adjSourceY = sourceY;
+    if (sourcePosition === 'left') adjSourceX += HANDLE_OFFSET;
+    else if (sourcePosition === 'right') adjSourceX -= HANDLE_OFFSET;
+    else if (sourcePosition === 'top') adjSourceY += HANDLE_OFFSET;
+    else if (sourcePosition === 'bottom') adjSourceY -= HANDLE_OFFSET;
+    
+    // Adjust target position - same as source calculation, then subtract arrow length
+    // First apply handle offset (same as source), then pull back by arrow length
+    adjTargetX = targetX;
+    adjTargetY = targetY;
+    
+    if (targetPosition === 'left') {
+      // First apply handle offset, then subtract arrow length
+      adjTargetX = targetX + HANDLE_OFFSET - ARROW_LENGTH;
+    } else if (targetPosition === 'right') {
+      // First apply handle offset, then subtract arrow length
+      adjTargetX = targetX - HANDLE_OFFSET + ARROW_LENGTH;
+    } else if (targetPosition === 'top') {
+      // First apply handle offset, then subtract arrow length
+      adjTargetY = targetY + HANDLE_OFFSET - ARROW_LENGTH;
+    } else if (targetPosition === 'bottom') {
+      // First apply handle offset, then subtract arrow length
+      adjTargetY = targetY - HANDLE_OFFSET + ARROW_LENGTH;
+    }
+    
+    // Get edge path - using smooth step with borderRadius: 0 for sharp 90-degree corners
+    const [path] = getSmoothStepPath({
+      sourceX: adjSourceX,
+      sourceY: adjSourceY,
+      targetX: adjTargetX,
+      targetY: adjTargetY,
+      sourcePosition,
+      targetPosition,
+      borderRadius: 0  // This creates sharp 90-degree corners
+    });
+    
+    edgePath = path;
   }
   
-  // Get edge path
-  const [edgePath] = getSmoothStepPath({
-    sourceX: adjSourceX,
-    sourceY: adjSourceY,
-    targetX: adjTargetX,
-    targetY: adjTargetY,
-    sourcePosition,
-    targetPosition,
-  });
+  // Recalculate whenever props change or component initializes
+  $: if (sourceX !== undefined && targetX !== undefined) {
+    recalculatePath();
+  }
+  
+  // Force recalculation when initialized changes
+  $: if (initialized) {
+    recalculatePath();
+  }
   
   // Extract stroke color from style if provided
   const strokeColor = style?.match(/stroke:\s*([^;]+)/)?.[1] || '#000000';
-  
-  // Create unique marker ID for this edge
-  const markerId = `sharp-arrow-marker-${id}`;
-  
-  // Inject marker definition on mount
-  onMount(() => {
-    const svgElement = document.querySelector('.svelte-flow__edges svg');
-    if (!svgElement) return;
-    
-    let defs = svgElement.querySelector('defs');
-    if (!defs) {
-      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      svgElement.prepend(defs);
-    }
-    
-    // Check if marker already exists
-    if (defs.querySelector(`#${markerId}`)) return;
-    
-    // Create marker element
-    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-    marker.setAttribute('id', markerId);
-    marker.setAttribute('viewBox', '0 0 8.8 7');
-    marker.setAttribute('refX', '0'); // Position at arrow base (since line stops at base)
-    marker.setAttribute('refY', '3.5');
-    marker.setAttribute('markerWidth', '8.8');
-    marker.setAttribute('markerHeight', '7');
-    marker.setAttribute('orient', 'auto');
-    marker.setAttribute('markerUnits', 'userSpaceOnUse');
-    
-    // Create the sharp triangle path (from sharp-triangle.svg)
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', 'M 8.8 3.5 L 0 0 L 0 7 Z');
-    path.setAttribute('fill', strokeColor);
-    
-    marker.appendChild(path);
-    defs.appendChild(marker);
-    
-    return () => {
-      // Cleanup marker on unmount
-      const markerToRemove = defs?.querySelector(`#${markerId}`);
-      if (markerToRemove) markerToRemove.remove();
-    };
-  });
 </script>
 
 <g>
@@ -113,7 +109,7 @@
     fill="none"
     stroke={strokeColor}
     stroke-width="2"
-    marker-end={`url(#${markerId})`}
+    marker-end="url(#sharp-arrow-marker)"
     class="svelte-flow__edge-path"
     {style}
   />

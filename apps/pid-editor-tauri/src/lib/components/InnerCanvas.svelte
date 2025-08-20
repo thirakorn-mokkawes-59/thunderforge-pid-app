@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import {
     SvelteFlow,
     Background,
@@ -15,6 +15,7 @@
   } from '@xyflow/svelte';
   import PIDSymbolNode from './PIDSymbolNode.svelte';
   import PIDEdge from './PIDEdge.svelte';
+  import EdgeMarkers from './EdgeMarkers.svelte';
   import { diagram } from '$lib/stores/diagram';
   import { clipboard } from '$lib/stores/clipboard';
 
@@ -42,6 +43,9 @@
 
   // Connection mode state
   let connectionMode = false;
+  
+  // Track if edges should be rendered (wait for nodes to be ready)
+  let nodesReady = false;
   
   // Track the connection start node to ensure correct direction
   let connectionStartNode: string | null = null;
@@ -137,14 +141,17 @@
   // Track when we can safely create edges
   let canCreateEdges = false;
   
+  // Add a version key to force re-instantiation of edges
+  let edgeVersion = 0;
+  
   // Convert diagram connections to edges - don't create any edges until ready
-  $: edges = canCreateEdges ? $diagram.connections.map(conn => {
+  $: edges = canCreateEdges && nodesReady ? $diagram.connections.map(conn => {
       // Find source and target nodes to get their data
       const sourceNode = nodes.find(n => n.id === conn.from.elementId);
       const targetNode = nodes.find(n => n.id === conn.to.elementId);
       
       return {
-        id: conn.id,
+        id: `${conn.id}_v${edgeVersion}`, // Add version to force new instance
         source: conn.from.elementId,
         target: conn.to.elementId,
         // Ensure handle indices are within our fixed range (0-3)
@@ -166,7 +173,9 @@
           sourceNodeData: sourceNode?.data,  // Pass source node data
           targetNodeData: targetNode?.data,  // Pass target node data
           sourceNodeId: conn.from.elementId, // Pass source node ID for T-depth lookup
-          targetNodeId: conn.to.elementId    // Pass target node ID for T-depth lookup
+          targetNodeId: conn.to.elementId,   // Pass target node ID for T-depth lookup
+          version: edgeVersion,  // Pass version to force update
+          forceUpdate: Date.now() // Add timestamp to force recalculation
           // offsetStart and offsetEnd will be auto-calculated based on T-intersection positions
         }
       };
@@ -655,10 +664,43 @@
   }
 
   // Store the flow instance when it's ready
-  function onInit() {
+  async function onInit() {
     const flow = useSvelteFlow();
     flowInstance = flow;
-    // Don't fit view here - wait for nodes to be ready
+    
+    // On page reload, we need to completely recreate edges to bypass cache
+    // Check if we have existing connections (means we're loading from localStorage)
+    const hasExistingConnections = $diagram.connections.length > 0;
+    
+    if (hasExistingConnections) {
+      // Clear edges completely first to force fresh calculation
+      edges = [];
+      canCreateEdges = false;
+      nodesReady = false;
+      await tick();
+      
+      // Wait for DOM to stabilize
+      setTimeout(async () => {
+        // Now recreate edges with our custom component
+        canCreateEdges = true;
+        nodesReady = true;
+        edgeVersion++; // Force new edge instances
+        await tick();
+        
+        // Force a second update to ensure proper positioning
+        setTimeout(() => {
+          edgeVersion++;
+        }, 100);
+      }, 300);
+    } else {
+      // Normal initialization for new diagrams
+      setTimeout(async () => {
+        canCreateEdges = true;
+        nodesReady = true;
+        edgeVersion++;
+        await tick();
+      }, 200);
+    }
   }
   
   // Handle position updates from property panel
@@ -723,13 +765,21 @@
     // Close context menu on click outside
     window.addEventListener('click', closeContextMenu);
     
-    // Since we now have fixed handles that exist immediately,
-    // we only need a small delay for React Flow to initialize
-    setTimeout(() => {
-      canCreateEdges = true;
-      // Force a re-render by updating edges
-      edges = [...edges];
-    }, 100); // Short delay for React Flow initialization
+    // Check if we're loading from saved state
+    const isReload = $diagram.connections.length > 0 || $diagram.elements.length > 0;
+    
+    if (isReload) {
+      // Don't create edges immediately on reload - wait for onInit
+      canCreateEdges = false;
+      nodesReady = false;
+      edges = []; // Clear any cached edges
+    } else {
+      // For new diagrams, we can enable edge creation sooner
+      setTimeout(() => {
+        canCreateEdges = true;
+        nodesReady = true;
+      }, 100);
+    }
     
     return () => {
       window.removeEventListener('toggle-connection-mode', handleConnectionModeToggle as EventListener);
@@ -827,6 +877,7 @@
     edgesFocusable={false}
     attributionPosition="bottom-right"
   >
+    <EdgeMarkers />
     {#if $diagram.showGrid}
       <Background 
         variant={BackgroundVariant.Lines} 

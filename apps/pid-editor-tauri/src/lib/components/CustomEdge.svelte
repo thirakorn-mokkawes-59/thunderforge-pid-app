@@ -113,7 +113,7 @@
       targetY: extendedTargetY,
       sourcePosition,
       targetPosition,
-      borderRadius: 0 // Use 0 radius for sharp corners like step edges
+      borderRadius: 0  // Sharp 90-degree corners
     });
   })();
 
