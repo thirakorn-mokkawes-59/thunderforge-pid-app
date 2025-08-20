@@ -178,8 +178,24 @@
     setTimeout(() => {
       updatingNodes = false;    }, 100);  }
 
+  // Validate connections
+  function isValidConnection(connection: any) {
+    // Prevent self-connections
+    if (connection.source === connection.target) {
+      return false;
+    }
+    return true;
+  }
+  
   // Handle new connections
-  const handleConnect: OnConnect = (connection) => {    if (!connection.source || !connection.target) return;
+  const handleConnect: OnConnect = (connection) => {    
+    if (!connection.source || !connection.target) return;
+    
+    // Prevent self-connections (double-check)
+    if (connection.source === connection.target) {
+      console.log('Self-connections are not allowed');
+      return;
+    }
     
     creatingConnection = true;
     
@@ -665,6 +681,7 @@
     {nodeTypes}
     oninit={onInit}
     onconnect={handleConnect}
+    {isValidConnection}
     onconnectstart={(event, params) => {      creatingConnection = true;
     }}
     onconnectend={(event) => {      setTimeout(() => {

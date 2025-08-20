@@ -345,15 +345,24 @@
     <img src={data.symbolPath} alt={data.name} style="filter: brightness(0) saturate(100%) {nodeColor !== '#000000' ? `drop-shadow(0 0 0 ${nodeColor})` : ''};" />
   {/if}
   
-  <!-- Add handles at connection points - all as source type for true bidirectional -->
+  <!-- Add dual handles at connection points for true bidirectional connections -->
   {#each connectionPoints as point, i}
-    <!-- All handles as source type with connectionMode="loose" for bidirectional connections -->
+    <!-- Target handle for incoming connections -->
+    <Handle
+      type="target"
+      position={getHandlePosition(point)}
+      id={`handle-${i}`}
+      style={getHandleStyle(point)}
+      class="connection-handle connection-handle-target"
+      isConnectable={true}
+    />
+    <!-- Source handle for outgoing connections -->
     <Handle
       type="source"
       position={getHandlePosition(point)}
       id={`handle-${i}`}
       style={getHandleStyle(point)}
-      class="connection-handle"
+      class="connection-handle connection-handle-source"
       isConnectable={true}
     />
   {/each}
@@ -548,6 +557,13 @@
     overflow: visible !important;
     cursor: crosshair;
     opacity: 0 !important;
+    pointer-events: all;
+  }
+  
+  /* Ensure both source and target handles overlap perfectly */
+  :global(.connection-handle-target),
+  :global(.connection-handle-source) {
+    position: absolute;
   }
   
   /* Show the actual red T-shapes from SVG on hover */
