@@ -47,6 +47,9 @@
   // Track which nodes have been initialized (to distinguish from new nodes)
   // Using $: to make it reactive but stable
   let initializedNodeIds = new Set<string>();
+  
+  // Track if we're currently dragging to prevent edge recreation
+  let isDragging = false;
 
   // Connection mode state
   let connectionMode = false;
@@ -152,7 +155,8 @@
   let edgeVersion = 0;
   
   // Convert diagram connections to edges - don't create any edges until ready
-  $: edges = canCreateEdges && nodesReady ? (() => {
+  // Don't recreate edges while dragging to avoid handle errors
+  $: edges = canCreateEdges && nodesReady && !isDragging ? (() => {
     console.log('[InnerCanvas] Creating edges', {
       canCreateEdges,
       nodesReady,
@@ -223,17 +227,15 @@
   }
 
   // Handle node drag
-  function handleNodeDragStop(event: CustomEvent) {
+  async function handleNodeDragStop(event: CustomEvent) {
     const node = event.detail.node;
-    console.log('[InnerCanvas] Node drag stopped', {
-      nodeId: node.id,
-      position: node.position,
-      edgeVersion
-    });
+    // Node drag stopped
     
     // Update node internals to recalculate handle positions
     if (updateNodeInternals) {
       updateNodeInternals(node.id);
+      // Wait for handles to be updated before continuing
+      await tick();
     }
     
     // Apply snap to grid if enabled
@@ -255,6 +257,9 @@
         ? { ...n, position: snappedPosition }
         : n
     );
+    
+    // Wait a moment for handles to be ready before updating diagram
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Update diagram store with center position
     const newX = snappedPosition.x + node.data.width / 2;
@@ -1012,12 +1017,17 @@
     onnodedrag={(event) => {
       // Don't update nodes during drag - let React Flow handle the dragging smoothly
       // We'll update our state only when drag stops
+      isDragging = true;
     }}
-    onnodedragstop={(event) => {
+    onnodedragstop={async (event) => {
       const node = event?.nodes?.[0] || event;
       if (node && node.id) {
-        handleNodeDragStop({ detail: { node } });
+        await handleNodeDragStop({ detail: { node } });
       }
+      // Re-enable edge updates after drag is complete
+      setTimeout(() => {
+        isDragging = false;
+      }, 200);
     }}
     onnodeclick={handleNodeClick}
     onnodecontextmenu={handleNodeRightClick}
