@@ -152,10 +152,27 @@
   let edgeVersion = 0;
   
   // Convert diagram connections to edges - don't create any edges until ready
-  $: edges = canCreateEdges && nodesReady ? $diagram.connections.map(conn => {
+  $: edges = canCreateEdges && nodesReady ? (() => {
+    console.log('[InnerCanvas] Creating edges', {
+      canCreateEdges,
+      nodesReady,
+      connectionsCount: $diagram.connections.length,
+      edgeVersion,
+      timestamp: Date.now()
+    });
+    
+    return $diagram.connections.map(conn => {
       // Find source and target nodes to get their data
       const sourceNode = nodes.find(n => n.id === conn.from.elementId);
       const targetNode = nodes.find(n => n.id === conn.to.elementId);
+      
+      // Debug: Log node positions
+      if (sourceNode && targetNode) {
+        console.log(`[InnerCanvas] Edge ${conn.id} connecting:`, {
+          source: { id: sourceNode.id, position: sourceNode.position },
+          target: { id: targetNode.id, position: targetNode.position }
+        });
+      }
       
       return {
         id: `${conn.id}_v${edgeVersion}`, // Add version to force new instance
@@ -186,7 +203,8 @@
           // offsetStart and offsetEnd will be auto-calculated based on T-intersection positions
         }
       };
-    }) : [];
+    });
+  })() : [];
 
   // Snap position to grid if enabled
   function snapToGrid(position: { x: number; y: number }) {
@@ -202,6 +220,16 @@
   // Handle node drag
   function handleNodeDragStop(event: CustomEvent) {
     const node = event.detail.node;
+    console.log('[InnerCanvas] Node drag stopped', {
+      nodeId: node.id,
+      position: node.position,
+      edgeVersion
+    });
+    
+    // Update node internals to recalculate handle positions
+    if (flowInstance && flowInstance.updateNodeInternals) {
+      flowInstance.updateNodeInternals(node.id);
+    }
     
     // Apply snap to grid if enabled
     const snappedPosition = snapToGrid(node.position);
@@ -690,37 +718,76 @@
 
   // Store the flow instance when it's ready
   async function onInit() {
+    console.log('[InnerCanvas] onInit called', {
+      connectionsCount: $diagram.connections.length,
+      elementsCount: $diagram.elements.length,
+      nodesCount: nodes.length,
+      edgesCount: edges.length,
+      timestamp: Date.now()
+    });
+    
     const flow = useSvelteFlow();
     flowInstance = flow;
-    
-    // Force clear any cached edge types
-    if (flowInstance && flowInstance.updateEdge) {
-      // Update all edges to ensure they use our custom type
-      edges.forEach(edge => {
-        if (edge.type !== 'custom') {
-          flowInstance.updateEdge(edge.id, { type: 'custom' });
-        }
-      });
-    }
     
     // On page reload, we need to completely recreate edges to bypass cache
     // Check if we have existing connections (means we're loading from localStorage)
     const hasExistingConnections = $diagram.connections.length > 0;
     const hasExistingElements = $diagram.elements.length > 0;
     
+    console.log('[InnerCanvas] Checking reload state', {
+      hasExistingConnections,
+      hasExistingElements,
+      isReload: hasExistingConnections || hasExistingElements
+    });
+    
     if (hasExistingConnections || hasExistingElements) {
       // Clear edges completely first to force fresh calculation
+      console.log('[InnerCanvas] Clearing edges for reload');
       edges = [];
       canCreateEdges = false;
       nodesReady = false;
       await tick();
       
-      // Wait for DOM to stabilize
-      setTimeout(async () => {
+      // IMPORTANT: Wait for nodes to be fully rendered and positioned
+      // Check that nodes have actual positions
+      const waitForNodes = async () => {
+        const flowNodes = flowInstance.getNodes();
+        console.log('[InnerCanvas] Checking node positions:', flowNodes.map(n => ({
+          id: n.id,
+          position: n.position,
+          computed: n.computedPosition
+        })));
+        
+        // Check if all nodes have valid positions
+        const allNodesPositioned = flowNodes.length > 0 && 
+          flowNodes.every(n => n.position && (n.position.x !== 0 || n.position.y !== 0));
+        
+        if (!allNodesPositioned) {
+          console.log('[InnerCanvas] Nodes not ready, waiting...');
+          setTimeout(waitForNodes, 100);
+          return;
+        }
+        
+        console.log('[InnerCanvas] All nodes positioned, updating node internals');
+        
+        // CRITICAL: Force SvelteFlow to recalculate handle positions
+        // This is necessary because SvelteFlow caches handle positions
+        const nodeIds = flowNodes.map(n => n.id);
+        
+        // Use updateNodeInternals to force handle recalculation
+        if (flowInstance.updateNodeInternals) {
+          console.log('[InnerCanvas] Updating node internals for:', nodeIds);
+          nodeIds.forEach(nodeId => {
+            flowInstance.updateNodeInternals(nodeId);
+          });
+          await tick();
+        }
+        
         // Now recreate edges with our custom component
         canCreateEdges = true;
         nodesReady = true;
         edgeVersion++; // Force new edge instances
+        console.log('[InnerCanvas] Edge version incremented to:', edgeVersion);
         await tick();
         
         // Fit view to trigger complete viewport recalculation
@@ -732,13 +799,27 @@
               duration: 200 // Smooth animation
             });
             
-            // After fit view, force another edge update
+            // After fit view, update node internals again and force edge update
             setTimeout(() => {
-              edgeVersion++;
+              console.log('[InnerCanvas] Final update after fitView');
+              
+              // Update node internals one more time
+              const nodeIds = flowInstance.getNodes().map(n => n.id);
+              nodeIds.forEach(nodeId => {
+                flowInstance.updateNodeInternals(nodeId);
+              });
+              
+              // Then update edges
+              setTimeout(() => {
+                edgeVersion++;
+              }, 50);
             }, 250);
           }, 100);
         }
-      }, 300);
+      };
+      
+      // Start waiting for nodes
+      setTimeout(waitForNodes, 300);
     } else {
       // Normal initialization for new diagrams
       setTimeout(async () => {
@@ -815,20 +896,40 @@
     // Check if we're loading from saved state
     const isReload = $diagram.connections.length > 0 || $diagram.elements.length > 0;
     
+    console.log('[InnerCanvas] onMount', {
+      isReload,
+      connections: $diagram.connections.length,
+      elements: $diagram.elements.length,
+      canCreateEdges,
+      nodesReady
+    });
+    
     if (isReload) {
       // Don't create edges immediately on reload - wait for onInit
+      console.log('[InnerCanvas] Detected reload, delaying edge creation');
       canCreateEdges = false;
       nodesReady = false;
       edges = []; // Clear any cached edges
       
-      // Also trigger a fit view after nodes are loaded
+      // Also trigger node internal updates after nodes are loaded
       setTimeout(() => {
         if (flowInstance && nodes.length > 0) {
-          // Initial fit view to ensure viewport is set correctly
-          flowInstance.fitView({
-            padding: 0.15,
-            duration: 0 // No animation for initial load
+          // Update all node internals to force handle recalculation
+          const nodeIds = nodes.map(n => n.id);
+          console.log('[InnerCanvas] Early node internals update for:', nodeIds);
+          nodeIds.forEach(nodeId => {
+            if (flowInstance.updateNodeInternals) {
+              flowInstance.updateNodeInternals(nodeId);
+            }
           });
+          
+          // Then fit view to ensure viewport is set correctly
+          setTimeout(() => {
+            flowInstance.fitView({
+              padding: 0.15,
+              duration: 0 // No animation for initial load
+            });
+          }, 100);
         }
       }, 500);
     } else {

@@ -19,18 +19,28 @@
   // Track if component is mounted to ensure fresh calculations
   let mounted = false;
   let initialized = false;
+  let renderCount = 0;
   
+  // Debug: Log when component mounts
   onMount(() => {
     mounted = true;
+    console.log(`[PIDEdge ${id}] Component mounted`, {
+      sourceX, sourceY, targetX, targetY,
+      sourcePosition, targetPosition,
+      timestamp: Date.now()
+    });
+    
     // Force immediate recalculation on mount to override any cached positions
     setTimeout(() => {
       initialized = true;
+      console.log(`[PIDEdge ${id}] Initialized, forcing recalculation`);
       recalculatePath();
     }, 0);
     
     return () => {
       mounted = false;
       initialized = false;
+      console.log(`[PIDEdge ${id}] Component unmounted`);
     };
   });
 
@@ -46,6 +56,13 @@
   let adjTargetY = targetY;
   
   function recalculatePath() {
+    renderCount++;
+    
+    const oldSourceX = adjSourceX;
+    const oldSourceY = adjSourceY;
+    const oldTargetX = adjTargetX;
+    const oldTargetY = adjTargetY;
+    
     // Adjust source position
     adjSourceX = sourceX;
     adjSourceY = sourceY;
@@ -71,6 +88,32 @@
     } else if (targetPosition === 'bottom') {
       // First apply handle offset, then subtract arrow length
       adjTargetY = targetY - HANDLE_OFFSET + ARROW_LENGTH;
+    }
+    
+    // Debug: Log position changes
+    if (renderCount <= 5 || 
+        Math.abs(oldSourceX - adjSourceX) > 1 || 
+        Math.abs(oldSourceY - adjSourceY) > 1 ||
+        Math.abs(oldTargetX - adjTargetX) > 1 ||
+        Math.abs(oldTargetY - adjTargetY) > 1) {
+      console.log(`[PIDEdge ${id}] Recalculating path (render #${renderCount})`, {
+        raw: { sourceX, sourceY, targetX, targetY },
+        adjusted: { adjSourceX, adjSourceY, adjTargetX, adjTargetY },
+        deltas: {
+          sourceX: adjSourceX - sourceX,
+          sourceY: adjSourceY - sourceY,
+          targetX: adjTargetX - targetX,
+          targetY: adjTargetY - targetY
+        },
+        positions: { sourcePosition, targetPosition },
+        offsets: { HANDLE_OFFSET, ARROW_LENGTH },
+        change: renderCount > 1 ? {
+          sourceXChanged: Math.abs(oldSourceX - adjSourceX) > 0.1,
+          sourceYChanged: Math.abs(oldSourceY - adjSourceY) > 0.1,
+          targetXChanged: Math.abs(oldTargetX - adjTargetX) > 0.1,
+          targetYChanged: Math.abs(oldTargetY - adjTargetY) > 0.1
+        } : null
+      });
     }
     
     // Get edge path - using smooth step with borderRadius: 0 for sharp 90-degree corners

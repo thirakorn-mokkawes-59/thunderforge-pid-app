@@ -1,6 +1,7 @@
 <script lang="ts">
   import { BaseEdge, getSmoothStepPath } from '@xyflow/svelte';
   import type { EdgeProps } from '@xyflow/svelte';
+  import { onMount } from 'svelte';
 
   type $$Props = EdgeProps;
 
@@ -119,12 +120,29 @@
 
   $: [edgePath] = extendedPath;
   
-  // Debug logging disabled for production - uncomment to debug edge offsets
-  // $: if (id && (offsetStart || offsetEnd)) {
-  //   console.log(`CustomEdge ${id}: offsets = ${offsetStart}/${offsetEnd}`);
-  //   console.log(`Source pos: ${sourcePosition}, Target pos: ${targetPosition}`);
-  //   console.log(`Original: (${sourceX.toFixed(1)}, ${sourceY.toFixed(1)}) -> (${targetX.toFixed(1)}, ${targetY.toFixed(1)})`);
-  // }
+  // Debug logging to compare with PIDEdge
+  let renderCount = 0;
+  onMount(() => {
+    console.log(`[CustomEdge ${id}] Mounted with positions:`, {
+      source: { x: sourceX, y: sourceY, position: sourcePosition },
+      target: { x: targetX, y: targetY, position: targetPosition },
+      offsets: { start: offsetStart, end: offsetEnd }
+    });
+  });
+  
+  $: if (renderCount < 3) {
+    renderCount++;
+    console.log(`[CustomEdge ${id}] Render #${renderCount}:`, {
+      raw: { sourceX, sourceY, targetX, targetY },
+      extended: { 
+        sourceX: extendedSourceX, 
+        sourceY: extendedSourceY,
+        targetX: extendedTargetX,
+        targetY: extendedTargetY
+      },
+      positions: { sourcePosition, targetPosition }
+    });
+  }
 </script>
 
 <BaseEdge 
