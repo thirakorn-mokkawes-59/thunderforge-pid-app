@@ -163,6 +163,10 @@
         const isVesselGeneralColumn = data.symbolPath?.includes('vessel_general_column');
         const isVesselConicalHead = data.symbolPath?.includes('vessel_conical_head');
         const isVesselDishedHead = data.symbolPath?.includes('vessel_dished_head');
+        const isVesselTrays = data.symbolPath?.includes('vessel_trays');
+        const isVesselSpherical = data.symbolPath?.includes('vessel_spherical');
+        const isVesselFixedBed = data.symbolPath?.includes('vessel_fixed_bed');
+        const isVesselFluidizedBed = data.symbolPath?.includes('vessel_fluidized_bed');
         const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
         const isPump = data.symbolPath?.includes('pump');
         const isCompressor = data.symbolPath?.includes('compressor');
@@ -357,6 +361,74 @@
                   tJunctions.left.v = { transform, element: el };
                 }
                 
+              } else if (isVesselTrays || isVesselFixedBed || isVesselFluidizedBed) {
+                // Vessel Trays, Fixed Bed, and Fluidized Bed have same patterns (rectangular vessels)
+                // TOP T-junction
+                if (transform.includes('translate(11 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(13 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(22 24)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(25 23)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(11 46)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(13 46)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 24)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 23)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isVesselSpherical) {
+                // Vessel Spherical specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(20 2.038)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(39.962 22.93)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(43 21.93)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(20 43.822)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 43.822)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(-0.038 22.93)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 21.93)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
               } else if (isTankGeneralBasin) {
                 // Tank General Basin specific patterns
                 // TOP T-junction
@@ -515,6 +587,12 @@
         } else if (isVesselDishedHead) {
           mainGroupOffsetX = 18.5;
           mainGroupOffsetY = 11.5;
+        } else if (isVesselTrays || isVesselFixedBed || isVesselFluidizedBed) {
+          mainGroupOffsetX = 19.5;
+          mainGroupOffsetY = 8.5;
+        } else if (isVesselSpherical) {
+          mainGroupOffsetX = 10.5;
+          mainGroupOffsetY = 8.5;
         } else if (isTankGeneralBasin) {
           mainGroupOffsetX = 7.5;
           mainGroupOffsetY = 13.5;
@@ -621,6 +699,35 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (14)
                   intersectionY = hY; // Use horizontal line Y (39)
+                }
+              } else if (isVesselTrays || isVesselFixedBed || isVesselFluidizedBed) {
+                // Rectangular vessels with same dimensions
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (13)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T (0 + 2 = 2)
+                  intersectionY = hY; // Use horizontal line Y (24)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (22 + 1.5 = 23.5)
+                  intersectionY = hY; // Use horizontal line Y (24)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (13)
+                  intersectionY = hY; // Use horizontal line Y (46)
+                }
+              } else if (isVesselSpherical) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (2.038)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (22.93)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T
+                  intersectionY = hY; // Use horizontal line Y (22.93)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (43.822)
                 }
               } else if (isTankGeneralBasin) {
                 if (position === 'top') {
