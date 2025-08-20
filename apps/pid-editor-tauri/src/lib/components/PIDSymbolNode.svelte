@@ -82,8 +82,20 @@
         
         // Simple approach: find red elements and calculate centers directly
         const rawPoints = Array.from(redElements).map((el, index) => {
-          // Get all transforms from element and parents
+          // Try to get the center of the T-shape more accurately
           let finalX = 0, finalY = 0;
+          
+          // If it's a line element, get the midpoint
+          if (el.tagName.toLowerCase() === 'line') {
+            const x1 = parseFloat(el.getAttribute('x1') || '0');
+            const y1 = parseFloat(el.getAttribute('y1') || '0');
+            const x2 = parseFloat(el.getAttribute('x2') || '0');
+            const y2 = parseFloat(el.getAttribute('y2') || '0');
+            finalX = (x1 + x2) / 2;
+            finalY = (y1 + y2) / 2;
+          }
+          
+          // Get all transforms from element and parents
           let currentElement = el;
           
           // Collect all translations
@@ -98,14 +110,16 @@
             // Add rotation center if present
             const rotateMatch = transform.match(/rotate\(([-\d.]+)(?:\s+([-\d.]+)\s+([-\d.]+))?\)/);
             if (rotateMatch && rotateMatch[2] && rotateMatch[3]) {
-              finalX += parseFloat(rotateMatch[2]);
-              finalY += parseFloat(rotateMatch[3]);
+              // Don't add rotation center to position, it's just for rotation
+              // finalX += parseFloat(rotateMatch[2]);
+              // finalY += parseFloat(rotateMatch[3]);
             }
             
             currentElement = currentElement.parentElement;
           }
           
-          const scaledX = (finalX + 1.2) * scaleX; // Shift right by 1.2 units to align with vertical line
+          // Apply scaling - position handle exactly at T-shape center
+          const scaledX = finalX * scaleX;
           const scaledY = finalY * scaleY;
           
           
@@ -254,23 +268,11 @@
     }
   }
   
-  // Calculate handle position as percentage with inward offset (for edge endpoint)
+  // Calculate handle position as percentage - centered on T-shape
   function getHandleStyle(point: {x: number, y: number}) {
-    // Get the position type to determine offset direction
-    const position = getHandlePosition(point);
-    
-    // Move handle position inward by 3 pixels to overlap with symbol
-    let offsetX = 0, offsetY = 0;
-    if (position === Position.Left) offsetX = 3;
-    else if (position === Position.Right) offsetX = -3;
-    else if (position === Position.Top) offsetY = 3;
-    else if (position === Position.Bottom) offsetY = -3;
-    
-    const adjustedX = point.x + offsetX;
-    const adjustedY = point.y + offsetY;
-    
-    const left = `${(adjustedX / data.width) * 100}%`;
-    const top = `${(adjustedY / data.height) * 100}%`;
+    // No offset - position handle exactly at T-shape center
+    const left = `${(point.x / data.width) * 100}%`;
+    const top = `${(point.y / data.height) * 100}%`;
     return `left: ${left}; top: ${top};`;
   }
   
@@ -559,13 +561,14 @@
     height: 20px !important;
     background: transparent !important;
     border: none !important;
+    /* Center the handle exactly on the T-shape */
     transform: translate(-50%, -50%);
     overflow: visible !important;
     cursor: crosshair;
     opacity: 0 !important;
     pointer-events: all;
     /* Add subtle indicator on hover for better feedback */
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
   }
   
   /* Show a subtle circle on hover for visual feedback */
