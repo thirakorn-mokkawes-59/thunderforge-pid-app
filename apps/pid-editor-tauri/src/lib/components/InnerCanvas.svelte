@@ -1179,9 +1179,7 @@
     background: #ffffff;
   }
   
-  :global(.svelte-flow__edge-path) {
-    stroke-width: 1px !important;
-  }
+  /* Removed stroke-width override to allow dynamic edge widths */
   
   :global(.svelte-flow__edges) {
     z-index: 9999 !important; /* Edges on top of everything */
