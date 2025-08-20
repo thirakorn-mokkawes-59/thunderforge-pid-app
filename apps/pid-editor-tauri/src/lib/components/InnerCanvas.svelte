@@ -417,7 +417,7 @@
         width: 60,
         height: 60,
         rotation: 0,
-        showLabel: true
+        showLabel: false
       };      
       // Add element to diagram
       diagram.addElement(element);    } catch (error) {
