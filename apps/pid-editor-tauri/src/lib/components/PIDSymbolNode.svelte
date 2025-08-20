@@ -4,6 +4,7 @@
   import type { NodeProps } from '@xyflow/svelte';
   import { diagram } from '$lib/stores/diagram';
   import { UI_CONSTANTS } from '$lib/constants/ui';
+  import { writable } from 'svelte/store';
   
   type $$Props = NodeProps;
   
@@ -17,6 +18,26 @@
   
   // Use our store to determine if selected
   $: isSelected = $diagram.selectedIds.has(id);
+  
+  // Track if we're currently in a connection process
+  let isConnecting = false;
+  let connectingNodeId: string | null = null;
+  
+  // Listen for connection events to determine handle behavior
+  function handleConnectionStart(event: CustomEvent) {
+    isConnecting = true;
+    connectingNodeId = event.detail?.nodeId || null;
+  }
+  
+  function handleConnectionEnd() {
+    isConnecting = false;
+    connectingNodeId = null;
+  }
+  
+  onMount(() => {
+    window.addEventListener('connection-start', handleConnectionStart as EventListener);
+    window.addEventListener('connection-end', handleConnectionEnd as EventListener);
+  });
   
   
   // Apply visual properties
@@ -80,69 +101,128 @@
         // Find connection indicator elements (red for equipment/valves, gray for pipes/signals)
         const redElements = svg.querySelectorAll('[stroke="#ff0000"], [stroke="rgb(255,0,0)"], [stroke="red"], [stroke="#646464"], [stroke="rgb(100,100,100)"]');
         
-        // Simple approach: find red elements and calculate centers directly
-        const rawPoints = Array.from(redElements).map((el, index) => {
-          // Try to get the center of the T-shape more accurately
-          let finalX = 0, finalY = 0;
+        // Improved approach: find T-shape groups and calculate connection edge
+        const tShapeGroups = new Map();
+        
+        // Group T-shape elements by proximity
+        Array.from(redElements).forEach((el, index) => {
+          let baseX = 0, baseY = 0;
           
-          // If it's a line element, get the midpoint
+          // Get element's base position
           if (el.tagName.toLowerCase() === 'line') {
             const x1 = parseFloat(el.getAttribute('x1') || '0');
             const y1 = parseFloat(el.getAttribute('y1') || '0');
             const x2 = parseFloat(el.getAttribute('x2') || '0');
             const y2 = parseFloat(el.getAttribute('y2') || '0');
-            
-            // For horizontal lines (T-shape stem), use the center
-            if (Math.abs(y1 - y2) < 0.1) {
-              finalX = (x1 + x2) / 2;
-              finalY = y1;
-            }
-            // For vertical lines (T-shape cap), use the center
-            else if (Math.abs(x1 - x2) < 0.1) {
-              finalX = x1;
-              finalY = (y1 + y2) / 2;
-            }
-            // For diagonal lines, use midpoint
-            else {
-              finalX = (x1 + x2) / 2;
-              finalY = (y1 + y2) / 2;
+            baseX = (x1 + x2) / 2;
+            baseY = (y1 + y2) / 2;
+          } else if (el.tagName.toLowerCase() === 'path') {
+            // For path elements, try to extract coordinates
+            const d = el.getAttribute('d') || '';
+            const coords = d.match(/M\s*([-\d.]+)\s*([-\d.]+)/);
+            if (coords) {
+              baseX = parseFloat(coords[1]);
+              baseY = parseFloat(coords[2]);
             }
           }
           
-          // Get all transforms from element and parents
+          // Apply transforms
           let currentElement = el;
-          
-          // Collect all translations
           while (currentElement && currentElement !== svg) {
             const transform = currentElement.getAttribute('transform') || '';
             const translateMatch = transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
             if (translateMatch) {
-              finalX += parseFloat(translateMatch[1]);
-              finalY += parseFloat(translateMatch[2]);
+              baseX += parseFloat(translateMatch[1]);
+              baseY += parseFloat(translateMatch[2]);
             }
-            
-            // Add rotation center if present
-            const rotateMatch = transform.match(/rotate\(([-\d.]+)(?:\s+([-\d.]+)\s+([-\d.]+))?\)/);
-            if (rotateMatch && rotateMatch[2] && rotateMatch[3]) {
-              // Don't add rotation center to position, it's just for rotation
-              // finalX += parseFloat(rotateMatch[2]);
-              // finalY += parseFloat(rotateMatch[3]);
-            }
-            
             currentElement = currentElement.parentElement;
           }
           
-          // Apply scaling - position handle exactly at T-shape center
-          const scaledX = finalX * scaleX;
-          const scaledY = finalY * scaleY;
+          // Find or create group for this position
+          const groupKey = `${Math.round(baseX/5)}_${Math.round(baseY/5)}`;
+          if (!tShapeGroups.has(groupKey)) {
+            tShapeGroups.set(groupKey, []);
+          }
+          tShapeGroups.get(groupKey).push({
+            element: el,
+            x: baseX,
+            y: baseY,
+            index
+          });
+        });
+        
+        // Process each T-shape group to find the outermost edge
+        const rawPoints = Array.from(tShapeGroups.values()).map((group, groupIndex) => {
+          if (group.length === 0) return null;
           
+          // Calculate the bounding box of all T-shape elements
+          let minX = Infinity, maxX = -Infinity;
+          let minY = Infinity, maxY = -Infinity;
+          let centerX = 0, centerY = 0;
+          
+          group.forEach(item => {
+            const el = item.element;
+            centerX += item.x;
+            centerY += item.y;
+            
+            if (el.tagName.toLowerCase() === 'line') {
+              const x1 = parseFloat(el.getAttribute('x1') || '0');
+              const y1 = parseFloat(el.getAttribute('y1') || '0');
+              const x2 = parseFloat(el.getAttribute('x2') || '0');
+              const y2 = parseFloat(el.getAttribute('y2') || '0');
+              
+              // Apply transform to get actual positions
+              let currentElement = el;
+              let transformX = 0, transformY = 0;
+              while (currentElement && currentElement !== svg) {
+                const transform = currentElement.getAttribute('transform') || '';
+                const translateMatch = transform.match(/translate\(([-\d.]+)[\s,]+([-\d.]+)\)/);
+                if (translateMatch) {
+                  transformX += parseFloat(translateMatch[1]);
+                  transformY += parseFloat(translateMatch[2]);
+                }
+                currentElement = currentElement.parentElement;
+              }
+              
+              minX = Math.min(minX, transformX + x1, transformX + x2);
+              maxX = Math.max(maxX, transformX + x1, transformX + x2);
+              minY = Math.min(minY, transformY + y1, transformY + y2);
+              maxY = Math.max(maxY, transformY + y1, transformY + y2);
+            }
+          });
+          
+          centerX /= group.length;
+          centerY /= group.length;
+          
+          // Determine which edge of the T-shape to connect to based on position relative to symbol center
+          const symbolCenterX = data.width / (2 * scaleX);
+          const symbolCenterY = data.height / (2 * scaleY);
+          
+          let connectionX = centerX;
+          let connectionY = centerY;
+          
+          // Move connection point to the edge of the T-shape closest to the symbol edge
+          const dx = centerX - symbolCenterX;
+          const dy = centerY - symbolCenterY;
+          
+          if (Math.abs(dx) > Math.abs(dy)) {
+            // Horizontal connection - move to left or right edge of T-shape
+            connectionX = dx > 0 ? maxX : minX;
+          } else {
+            // Vertical connection - move to top or bottom edge of T-shape
+            connectionY = dy > 0 ? maxY : minY;
+          }
+          
+          // Apply scaling
+          const scaledX = connectionX * scaleX;
+          const scaledY = connectionY * scaleY;
           
           return {
             x: scaledX,
             y: scaledY,
-            id: `handle-${index}`
+            id: `handle-${groupIndex}`
           };
-        });
+        }).filter(Boolean);
         
         
         // Group nearby points (within 5 pixels) to eliminate duplicates
@@ -169,6 +249,10 @@
           ...point,
           id: `handle-${index}`
         }));
+        
+        // Debug logging to understand connection points (disabled for performance)
+        // console.log(`Node ${id} connection points:`, connectionPoints.length, connectionPoints);
+        // console.log(`Node dimensions: ${data.width}x${data.height}`);
         
         // Hide red elements initially instead of removing them
         redElements.forEach(el => {
@@ -324,8 +408,22 @@
     }
   }
   
+  // Determine if handles should be connectable based on connection state
+  $: isThisNodeConnecting = connectingNodeId === id;
+  $: isOtherNodeConnecting = isConnecting && connectingNodeId !== id && connectingNodeId !== null;
+  
+  // When this node starts connecting, it acts as source (only source handles enabled)
+  // When another node is connecting, this node can be target (only target handles enabled)
+  // When no connection is happening, both handles are enabled
+  $: sourceHandlesEnabled = !isConnecting || isThisNodeConnecting;
+  $: targetHandlesEnabled = !isConnecting || isOtherNodeConnecting;
+  
   // Cleanup on component destroy
   onDestroy(() => {
+    // Remove event listeners
+    window.removeEventListener('connection-start', handleConnectionStart as EventListener);
+    window.removeEventListener('connection-end', handleConnectionEnd as EventListener);
+    
     // Clear all active timeouts
     activeTimeouts.forEach(id => clearTimeout(id));
     activeTimeouts.clear();
@@ -364,38 +462,81 @@
     <img src={data.symbolPath} alt={data.name} style="filter: brightness(0) saturate(100%) {nodeColor !== '#000000' ? `drop-shadow(0 0 0 ${nodeColor})` : ''};" />
   {/if}
   
-  <!-- Add dual handles at connection points for true bidirectional connections -->
-  {#each connectionPoints as point, i}
-    <!-- Debug: Show exact T-shape center -->
-    {#if DEBUG_HANDLES}
-      <div 
-        class="debug-t-center" 
-        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%;"
-        title="T-shape center"
-      ></div>
-    {/if}
-    
-    <!-- Target handle for incoming connections -->
-    <Handle
-      type="target"
-      position={getHandlePosition(point)}
-      id={`handle-${i}`}
-      style={getHandleStyle(point)}
-      class="connection-handle connection-handle-target {DEBUG_HANDLES ? 'debug-handle' : ''}"
-      isConnectable={true}
-      title="Click and drag to connect"
-    />
-    <!-- Source handle for outgoing connections -->
-    <Handle
-      type="source"
-      position={getHandlePosition(point)}
-      id={`handle-${i}`}
-      style={getHandleStyle(point)}
-      class="connection-handle connection-handle-source {DEBUG_HANDLES ? 'debug-handle' : ''}"
-      isConnectable={true}
-      title="Click and drag to connect"
-    />
-  {/each}
+  <!-- Always render 4 fixed handles at standard positions (top, right, bottom, left) -->
+  <!-- Each position has BOTH source and target handles for bidirectional connections -->
+  <!-- Handles are dynamically enabled based on connection state -->
+  
+  <!-- Top Handle (source + target) -->
+  <Handle
+    type="source"
+    position={Position.Top}
+    id="handle-0"
+    style="left: 50%; top: 0%;"
+    class="connection-handle connection-handle-source"
+    isConnectable={sourceHandlesEnabled}
+  />
+  <Handle
+    type="target"
+    position={Position.Top}
+    id="handle-0"
+    style="left: 50%; top: 0%;"
+    class="connection-handle connection-handle-target"
+    isConnectable={targetHandlesEnabled}
+  />
+  
+  <!-- Right Handle (source + target) -->
+  <Handle
+    type="source"
+    position={Position.Right}
+    id="handle-1"
+    style="left: 100%; top: 50%;"
+    class="connection-handle connection-handle-source"
+    isConnectable={sourceHandlesEnabled}
+  />
+  <Handle
+    type="target"
+    position={Position.Right}
+    id="handle-1"
+    style="left: 100%; top: 50%;"
+    class="connection-handle connection-handle-target"
+    isConnectable={targetHandlesEnabled}
+  />
+  
+  <!-- Bottom Handle (source + target) -->
+  <Handle
+    type="source"
+    position={Position.Bottom}
+    id="handle-2"
+    style="left: 50%; top: 100%;"
+    class="connection-handle connection-handle-source"
+    isConnectable={sourceHandlesEnabled}
+  />
+  <Handle
+    type="target"
+    position={Position.Bottom}
+    id="handle-2"
+    style="left: 50%; top: 100%;"
+    class="connection-handle connection-handle-target"
+    isConnectable={targetHandlesEnabled}
+  />
+  
+  <!-- Left Handle (source + target) -->
+  <Handle
+    type="source"
+    position={Position.Left}
+    id="handle-3"
+    style="left: 0%; top: 50%;"
+    class="connection-handle connection-handle-source"
+    isConnectable={sourceHandlesEnabled}
+  />
+  <Handle
+    type="target"
+    position={Position.Left}
+    id="handle-3"
+    style="left: 0%; top: 50%;"
+    class="connection-handle connection-handle-target"
+    isConnectable={targetHandlesEnabled}
+  />
   
   <!-- Label and Tag -->
   {#if data.showLabel !== false}
@@ -634,8 +775,8 @@
   }
   
   /* Ensure both source and target handles overlap perfectly */
-  :global(.connection-handle-target),
-  :global(.connection-handle-source) {
+  :global(.connection-handle-source),
+  :global(.connection-handle-target) {
     position: absolute;
   }
   

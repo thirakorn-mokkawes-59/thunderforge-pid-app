@@ -7,18 +7,25 @@
     type Edge,
     type Connection,
     type NodeTypes,
+    type EdgeTypes,
     type OnConnect,
     BackgroundVariant,
     MarkerType,
     useSvelteFlow
   } from '@xyflow/svelte';
   import PIDSymbolNode from './PIDSymbolNode.svelte';
+  import CustomEdge from './CustomEdge.svelte';
   import { diagram } from '$lib/stores/diagram';
   import { clipboard } from '$lib/stores/clipboard';
 
   // Define custom node types
   const nodeTypes: NodeTypes = {
     pidSymbol: PIDSymbolNode
+  };
+
+  // Define custom edge types
+  const edgeTypes: EdgeTypes = {
+    custom: CustomEdge
   };
 
   // Initialize arrays for nodes and edges
@@ -35,6 +42,9 @@
 
   // Connection mode state
   let connectionMode = false;
+  
+  // Track the connection start node to ensure correct direction
+  let connectionStartNode: string | null = null;
   
   // Subscribe to grid changes - the $ prefix makes it reactive to store changes
   $: showGrid = $diagram.showGrid;
@@ -124,29 +134,35 @@
     
   }
 
-  // Convert diagram connections to edges
-  $: edges = $diagram.connections.map(conn => ({
-    id: conn.id,
-    source: conn.from.elementId,
-    target: conn.to.elementId,
-    sourceHandle: `handle-${conn.from.pointIndex || 0}`,
-    targetHandle: `handle-${conn.to.pointIndex || 0}`,
-    type: 'step', // Back to step for better P&ID appearance
-    animated: false,
-    style: `stroke: ${conn.style.strokeColor}; stroke-width: 0.37px;`,
-    markerEnd: {
-      type: MarkerType.Arrow,
-      width: 8,
-      height: 8,
-      color: conn.style.strokeColor
-    },
-    interactionWidth: 0,
-    // Use larger uniform offset to handle worst case (vessels)
-    data: { 
-      offsetStart: -22,  // Extend 22px to ensure reaching all T-shapes
-      offsetEnd: -22     // Extend 22px to ensure reaching all T-shapes
-    }
-  }));
+  // Track when we can safely create edges
+  let canCreateEdges = false;
+  
+  // Convert diagram connections to edges - don't create any edges until ready
+  $: edges = canCreateEdges ? $diagram.connections.map(conn => {
+      return {
+        id: conn.id,
+        source: conn.from.elementId,
+        target: conn.to.elementId,
+        // Ensure handle indices are within our fixed range (0-3)
+        sourceHandle: `handle-${Math.min(conn.from.pointIndex || 0, 3)}`,
+        targetHandle: `handle-${Math.min(conn.to.pointIndex || 0, 3)}`,
+        type: 'custom', // USE CUSTOM EDGE TYPE THAT SUPPORTS OFFSETS
+        animated: false,
+        style: `stroke: ${conn.style.strokeColor || '#000000'}; stroke-width: 1px;`,
+        markerEnd: {
+          type: MarkerType.Arrow,
+          width: 8,
+          height: 8,
+          color: conn.style.strokeColor || '#000000'
+        },
+        interactionWidth: 0,
+        // Offsets to eliminate gaps between edges and symbols
+        data: { 
+          offsetStart: 15,  // Extends 15px INTO source symbol
+          offsetEnd: 15     // Extends 15px INTO target symbol
+        }
+      };
+    }) : [];
 
   // Snap position to grid if enabled
   function snapToGrid(position: { x: number; y: number }) {
@@ -203,20 +219,47 @@
     
     creatingConnection = true;
     
-    const sourceMatch = connection.sourceHandle?.match(/handle-(\d+)/);
-    const targetMatch = connection.targetHandle?.match(/handle-(\d+)/);
+    // Debug logging disabled - uncomment if needed
+    // console.log('Connection params:', {
+    //   source: connection.source,
+    //   sourceHandle: connection.sourceHandle,
+    //   target: connection.target,
+    //   targetHandle: connection.targetHandle,
+    //   connectionStartNode
+    // });
+    
+    // Determine actual source and target based on which node was clicked first
+    let actualSource = connection.source;
+    let actualTarget = connection.target;
+    let actualSourceHandle = connection.sourceHandle;
+    let actualTargetHandle = connection.targetHandle;
+    
+    // If the connection start node is different from what React Flow thinks is the source,
+    // swap them to maintain the correct direction
+    if (connectionStartNode && connectionStartNode !== connection.source) {
+      // User started from connectionStartNode, but React Flow has it backwards
+      actualSource = connectionStartNode;
+      actualTarget = connection.source; // What React Flow thinks is source is actually our target
+      // Also swap the handles
+      actualSourceHandle = connection.targetHandle;
+      actualTargetHandle = connection.sourceHandle;
+    }
+    
+    // Parse handle IDs - now they're in format "handle-0"
+    const sourceMatch = actualSourceHandle?.match(/handle-(\d+)/);
+    const targetMatch = actualTargetHandle?.match(/handle-(\d+)/);
     
     const newConnection = {
       id: `connection_${Date.now()}`,
       from: {
-        elementId: connection.source,
+        elementId: actualSource,
         pointIndex: sourceMatch ? parseInt(sourceMatch[1]) : 0,
         type: 'bidirectional' as const,
         x: 0,
         y: 0
       },
       to: {
-        elementId: connection.target,
+        elementId: actualTarget,
         pointIndex: targetMatch ? parseInt(targetMatch[1]) : 0,
         type: 'bidirectional' as const,
         x: 0,
@@ -230,7 +273,11 @@
       routing: 'direct' as any
     };
     
+    // console.log('Creating connection from', actualSource, 'to', actualTarget);
     diagram.addConnection(newConnection);
+    
+    // Reset connection start node
+    connectionStartNode = null;
     
     setTimeout(() => {
       creatingConnection = false;
@@ -589,12 +636,7 @@
   function onInit() {
     const flow = useSvelteFlow();
     flowInstance = flow;
-    // Fit view on initial load after a short delay to ensure nodes are rendered
-    setTimeout(() => {
-      if (flowInstance && nodes.length > 0) {
-        flowInstance.fitView({ padding: 0.1 });
-      }
-    }, 100);
+    // Don't fit view here - wait for nodes to be ready
   }
   
   // Handle position updates from property panel
@@ -659,6 +701,14 @@
     // Close context menu on click outside
     window.addEventListener('click', closeContextMenu);
     
+    // Since we now have fixed handles that exist immediately,
+    // we only need a small delay for React Flow to initialize
+    setTimeout(() => {
+      canCreateEdges = true;
+      // Force a re-render by updating edges
+      edges = [...edges];
+    }, 100); // Short delay for React Flow initialization
+    
     return () => {
       window.removeEventListener('toggle-connection-mode', handleConnectionModeToggle as EventListener);
       window.removeEventListener('keydown', handleKeyDown);
@@ -683,14 +733,37 @@
     {nodes}
     {edges}
     {nodeTypes}
+    {edgeTypes}
     oninit={onInit}
     onconnect={handleConnect}
     {isValidConnection}
-    onconnectstart={(event, params) => {      creatingConnection = true;
+    onconnectstart={(event, params) => {
+      creatingConnection = true;
+      // Store which node the connection started from
+      connectionStartNode = params?.nodeId || null;
+      // console.log('Connection started from node:', connectionStartNode);
+      
+      // Dispatch event to notify all nodes about connection start
+      const connectionEvent = new CustomEvent('connection-start', {
+        detail: { 
+          nodeId: params?.nodeId,
+          handleId: params?.handleId,
+          handleType: params?.handleType
+        }
+      });
+      window.dispatchEvent(connectionEvent);
     }}
-    onconnectend={(event) => {      setTimeout(() => {
+    onconnectend={(event) => {
+      setTimeout(() => {
         creatingConnection = false;
+        // Clear connection start node if connection was cancelled
+        if (!event?.evt?.shiftKey) { // If not completed with shift key
+          connectionStartNode = null;
+        }
       }, 100);
+      // Dispatch event to notify all nodes about connection end
+      const connectionEvent = new CustomEvent('connection-end');
+      window.dispatchEvent(connectionEvent);
     }}
     onnodedrag={(event) => {      const node = event?.nodes?.[0] || event;
       if (node && node.id) {        nodes = nodes.map(n => 
@@ -851,7 +924,7 @@
   }
   
   :global(.svelte-flow__edge-path) {
-    stroke-width: 0.37;
+    stroke-width: 1px !important;
   }
   
   :global(.svelte-flow__edges) {
@@ -860,6 +933,7 @@
   
   :global(.svelte-flow__edge) {
     z-index: 1000 !important;
+    pointer-events: all !important; /* Ensure edges are interactive */
   }
   
   :global(.svelte-flow__nodes) {
