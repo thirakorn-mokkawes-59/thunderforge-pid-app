@@ -140,10 +140,13 @@
     recalculatePath();
   }
   
-  // Extract stroke color and width from style if provided
-  const strokeColor = style?.match(/stroke:\s*([^;]+)/)?.[1] || '#000000';
-  const strokeWidthMatch = style?.match(/stroke-width:\s*([\d.]+)/)?.[1];
-  const strokeWidth = strokeWidthMatch ? parseFloat(strokeWidthMatch) : 0.5;
+  // Extract stroke color and width from style if provided (reactive)
+  $: strokeColor = style?.match(/stroke:\s*([^;]+)/)?.[1] || '#000000';
+  $: strokeWidthMatch = style?.match(/stroke-width:\s*([\d.]+)px?/)?.[1];
+  $: strokeWidth = strokeWidthMatch ? parseFloat(strokeWidthMatch) : 0.5;
+  
+  // Debug logging
+  $: console.log(`[PIDEdge ${id}] Stroke width:`, { style, strokeWidthMatch, strokeWidth });
 </script>
 
 <g>

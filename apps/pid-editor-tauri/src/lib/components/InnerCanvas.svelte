@@ -186,6 +186,12 @@
       const targetStrokeWidth = targetNode?.data?.strokeWidth || 0.5;
       const edgeStrokeWidth = (sourceStrokeWidth + targetStrokeWidth) / 2;
       
+      console.log(`[InnerCanvas] Edge stroke width for ${conn.id}:`, {
+        sourceStrokeWidth,
+        targetStrokeWidth,
+        edgeStrokeWidth
+      });
+      
       return {
         id: `${conn.id}_v${edgeVersion}`, // Add version to force new instance
         source: conn.from.elementId,
