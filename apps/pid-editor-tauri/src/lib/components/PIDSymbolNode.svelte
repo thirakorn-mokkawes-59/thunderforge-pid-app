@@ -321,8 +321,14 @@
               const absoluteY = mainGroupOffsetY + intersectionY;
               
               // Scale to actual symbol size
-              const scaledX = absoluteX * scaleX;
-              const scaledY = absoluteY * scaleY;
+              let scaledX = absoluteX * scaleX;
+              let scaledY = absoluteY * scaleY;
+              
+              // Add 1px adjustment to move handles slightly right
+              // This compensates for the slight left shift from T-junction calculations
+              if (position === 'left' || position === 'right') {
+                scaledX += 1;
+              }
               
               // Determine Position enum value and handle index
               let positionEnum;
