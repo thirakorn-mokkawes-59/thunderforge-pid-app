@@ -188,6 +188,9 @@
           left: { h: null, v: null }
         };
         
+        // For vessels with multiple connection points on same side
+        let additionalJunctions = [];
+        
         // First pass: find all horizontal and vertical lines for each T-junction
         Array.from(redElements).forEach((el, index) => {
           if (el.tagName.toLowerCase() === 'path') {
@@ -437,20 +440,14 @@
                 
               } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
                 // Vessel with coils/jacket - has multiple T-junctions on sides
+                // We need to track all connection points, not just in tJunctions structure
+                
                 // TOP T-junction
                 if (transform.includes('translate(20.023 2)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
                 }
                 if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
                   tJunctions.top.v = { transform, element: el };
-                }
-                
-                // RIGHT T-junctions (may have multiple)
-                if ((transform.includes('translate(40.023 9)') || transform.includes('translate(40.023 31)')) && transform.includes('rotate(270')) {
-                  if (!tJunctions.right.h) tJunctions.right.h = { transform, element: el };
-                }
-                if ((transform.includes('translate(43.011 8.011)') || transform.includes('translate(43.011 30.011)')) && transform.includes('rotate(270')) {
-                  if (!tJunctions.right.v) tJunctions.right.v = { transform, element: el };
                 }
                 
                 // BOTTOM T-junction
@@ -461,12 +458,66 @@
                   tJunctions.bottom.v = { transform, element: el };
                 }
                 
-                // LEFT T-junctions (may have multiple)
-                if ((transform.includes('translate(-0.023 17)') || transform.includes('translate(-0.023 40)')) && transform.includes('rotate(90')) {
-                  if (!tJunctions.left.h) tJunctions.left.h = { transform, element: el };
+                // RIGHT T-junctions - Store both positions for vessel full tube coil
+                if (transform.includes('translate(40.023 9)') && transform.includes('rotate(270')) {
+                  // First right junction (top coil)
+                  if (!tJunctions.right.h) {
+                    tJunctions.right.h = { transform, element: el };
+                  }
                 }
-                if ((transform.includes('translate(0.989 16.011)') || transform.includes('translate(0.989 39.011)')) && transform.includes('rotate(90')) {
-                  if (!tJunctions.left.v) tJunctions.left.v = { transform, element: el };
+                if (transform.includes('translate(43.011 8.011)') && transform.includes('rotate(270')) {
+                  if (!tJunctions.right.v) {
+                    tJunctions.right.v = { transform, element: el };
+                  }
+                }
+                if (transform.includes('translate(40.023 31)') && transform.includes('rotate(270')) {
+                  // Second right junction (bottom coil) - store in array for later processing
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'right2',
+                    h: { transform, element: el },
+                    x: 40.023,
+                    y: 31
+                  });
+                }
+                if (transform.includes('translate(43.011 30.011)') && transform.includes('rotate(270')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'right2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+                }
+                
+                // LEFT T-junctions - Store both positions for vessel full tube coil
+                if (transform.includes('translate(-0.023 17)') && transform.includes('rotate(90')) {
+                  // First left junction (top coil)
+                  if (!tJunctions.left.h) {
+                    tJunctions.left.h = { transform, element: el };
+                  }
+                }
+                if (transform.includes('translate(0.989 16.011)') && transform.includes('rotate(90')) {
+                  if (!tJunctions.left.v) {
+                    tJunctions.left.v = { transform, element: el };
+                  }
+                }
+                if (transform.includes('translate(-0.023 40)') && transform.includes('rotate(90')) {
+                  // Second left junction (bottom coil) - store in array for later processing
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'left2',
+                    h: { transform, element: el },
+                    x: -0.023,
+                    y: 40
+                  });
+                }
+                if (transform.includes('translate(0.989 39.011)') && transform.includes('rotate(90')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'left2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
                 }
                 
               } else if (isStorageContainer) {
@@ -1013,6 +1064,51 @@
             }
           }
         });
+        
+        // Process additional junctions for vessels with multiple connection points
+        if (additionalJunctions && additionalJunctions.length > 0) {
+          additionalJunctions.forEach(addJunction => {
+            if (addJunction.h && addJunction.v) {
+              const hTransform = addJunction.h.transform;
+              const vTransform = addJunction.v.transform;
+              
+              // Parse transforms to get coordinates
+              const hMatch = hTransform.match(/translate\(([^)]+)\)/);
+              const vMatch = vTransform.match(/translate\(([^)]+)\)/);
+              
+              if (hMatch && vMatch) {
+                const [hX, hY] = hMatch[1].split(/[\s,]+/).map(parseFloat);
+                const [vX, vY] = vMatch[1].split(/[\s,]+/).map(parseFloat);
+                
+                let intersectionX, intersectionY;
+                
+                if (addJunction.position === 'right2') {
+                  intersectionX = hX + 1.5; // Center of right T
+                  intersectionY = hY; // Use horizontal line Y (31)
+                } else if (addJunction.position === 'left2') {
+                  intersectionX = hX + 1; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (40)
+                }
+                
+                // Apply main group offset
+                const absoluteX = mainGroupOffsetX + intersectionX;
+                const absoluteY = mainGroupOffsetY + intersectionY;
+                
+                // Scale to actual symbol size
+                const scaledX = absoluteX * scaleX;
+                const scaledY = absoluteY * scaleY;
+                
+                junctionPoints.push({
+                  x: scaledX,
+                  y: scaledY,
+                  id: `handle-${junctionPoints.length}`,
+                  position: addJunction.position.includes('right') ? Position.Right : Position.Left,
+                  edgeDistance: 4
+                });
+              }
+            }
+          });
+        }
         
         // Use all detected T-junction points
         if (junctionPoints.length > 0) {
