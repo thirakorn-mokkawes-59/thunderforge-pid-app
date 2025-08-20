@@ -324,10 +324,10 @@
               let scaledX = absoluteX * scaleX;
               let scaledY = absoluteY * scaleY;
               
-              // Add 0.8px adjustment to move handles slightly right
+              // Add 0.7px adjustment to move handles slightly right
               // This compensates for the slight left shift from T-junction calculations
               if (position === 'left' || position === 'right') {
-                scaledX += 0.8;
+                scaledX += 0.7;
               }
               
               // Determine Position enum value and handle index
