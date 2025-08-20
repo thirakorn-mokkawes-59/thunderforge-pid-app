@@ -172,24 +172,10 @@
       const sourceNode = nodes.find(n => n.id === conn.from.elementId);
       const targetNode = nodes.find(n => n.id === conn.to.elementId);
       
-      // Debug: Log node positions
-      if (sourceNode && targetNode) {
-        console.log(`[InnerCanvas] Edge ${conn.id} connecting:`, {
-          source: { id: sourceNode.id, position: sourceNode.position },
-          target: { id: targetNode.id, position: targetNode.position }
-        });
-      }
-      
       // Get stroke width from nodes (use average if different, default to 0.5)
       const sourceStrokeWidth = sourceNode?.data?.strokeWidth || 0.5;
       const targetStrokeWidth = targetNode?.data?.strokeWidth || 0.5;
       const edgeStrokeWidth = (sourceStrokeWidth + targetStrokeWidth) / 2;
-      
-      console.log(`[InnerCanvas] Edge stroke width for ${conn.id}:`, {
-        sourceStrokeWidth,
-        targetStrokeWidth,
-        edgeStrokeWidth
-      });
       
       return {
         id: `${conn.id}_v${edgeVersion}`, // Add version to force new instance
