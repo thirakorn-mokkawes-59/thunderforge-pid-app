@@ -18,15 +18,22 @@
   import EdgeMarkers from './EdgeMarkers.svelte';
   import { diagram } from '$lib/stores/diagram';
   import { clipboard } from '$lib/stores/clipboard';
+  import { clearModuleCache, SESSION_ID } from '$lib/utils/cache-buster';
+  
+  // Clear any cached modules on component initialization
+  if (typeof window !== 'undefined') {
+    clearModuleCache();
+  }
 
   // Define custom node types
   const nodeTypes: NodeTypes = {
     pidSymbol: PIDSymbolNode
   };
 
-  // Define custom edge types  
+  // Define custom edge types - use dynamic key to bypass module cache
   const edgeTypes: EdgeTypes = {
-    custom: PIDEdge  // PID-style edge with sharp triangular arrow
+    custom: PIDEdge,  // PID-style edge with sharp triangular arrow
+    [`custom_${Date.now()}`]: PIDEdge  // Backup with timestamp to force fresh registration
   };
 
   // Initialize arrays for nodes and edges
@@ -472,6 +479,24 @@
         clipboard.copy(elementsToCopy);      }
     }
     
+    // Force hard refresh (Ctrl+Shift+R) - Development only
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'R') {
+      event.preventDefault();
+      if (window.location.hostname === 'localhost') {
+        console.log('Forcing hard refresh with cache clear...');
+        // Clear caches and reload
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            Promise.all(names.map(name => caches.delete(name))).then(() => {
+              window.location.reload();
+            });
+          });
+        } else {
+          window.location.reload();
+        }
+      }
+    }
+    
     // Paste copied node(s) (Ctrl+V)
     if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
       event.preventDefault();
@@ -667,6 +692,16 @@
   async function onInit() {
     const flow = useSvelteFlow();
     flowInstance = flow;
+    
+    // Force clear any cached edge types
+    if (flowInstance && flowInstance.updateEdge) {
+      // Update all edges to ensure they use our custom type
+      edges.forEach(edge => {
+        if (edge.type !== 'custom') {
+          flowInstance.updateEdge(edge.id, { type: 'custom' });
+        }
+      });
+    }
     
     // On page reload, we need to completely recreate edges to bypass cache
     // Check if we have existing connections (means we're loading from localStorage)
