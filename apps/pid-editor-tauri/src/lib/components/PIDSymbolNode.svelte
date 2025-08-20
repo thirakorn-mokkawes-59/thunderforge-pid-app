@@ -12,6 +12,9 @@
   export let selected: $$Props['selected'] = false;
   export let dragging: $$Props['dragging'] = false;
   
+  // Debug mode to visualize handle areas (set to true during development)
+  const DEBUG_HANDLES = false;
+  
   // Use our store to determine if selected
   $: isSelected = $diagram.selectedIds.has(id);
   
@@ -353,8 +356,9 @@
       position={getHandlePosition(point)}
       id={`handle-${i}`}
       style={getHandleStyle(point)}
-      class="connection-handle connection-handle-target"
+      class="connection-handle connection-handle-target {DEBUG_HANDLES ? 'debug-handle' : ''}"
       isConnectable={true}
+      title="Click and drag to connect"
     />
     <!-- Source handle for outgoing connections -->
     <Handle
@@ -362,8 +366,9 @@
       position={getHandlePosition(point)}
       id={`handle-${i}`}
       style={getHandleStyle(point)}
-      class="connection-handle connection-handle-source"
+      class="connection-handle connection-handle-source {DEBUG_HANDLES ? 'debug-handle' : ''}"
       isConnectable={true}
+      title="Click and drag to connect"
     />
   {/each}
   
@@ -547,10 +552,11 @@
     top: 50%;
   }
   
-  /* Connection handles - invisible, just for connection logic */
+  /* Connection handles - larger hit area for easier interaction */
   :global(.connection-handle) {
-    width: 1px !important;
-    height: 1px !important;
+    /* Increased from 1px to 20px for much easier clicking/dragging */
+    width: 20px !important;
+    height: 20px !important;
     background: transparent !important;
     border: none !important;
     transform: translate(-50%, -50%);
@@ -558,12 +564,54 @@
     cursor: crosshair;
     opacity: 0 !important;
     pointer-events: all;
+    /* Add subtle indicator on hover for better feedback */
+    transition: opacity 0.2s;
+  }
+  
+  /* Show a subtle circle on hover for visual feedback */
+  :global(.connection-handle:hover) {
+    opacity: 0.4 !important;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0.2) 50%, transparent 70%) !important;
+    animation: pulse-handle 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse-handle {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  
+  /* During connection dragging, make handles more visible */
+  :global(.connecting .connection-handle) {
+    opacity: 0.2 !important;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%) !important;
   }
   
   /* Ensure both source and target handles overlap perfectly */
   :global(.connection-handle-target),
   :global(.connection-handle-source) {
     position: absolute;
+  }
+  
+  /* Make valid connection targets more prominent during dragging */
+  :global(.valid-connection-target .connection-handle) {
+    opacity: 0.5 !important;
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.5) 0%, transparent 70%) !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  /* Debug mode - visualize handle areas */
+  :global(.debug-handle) {
+    opacity: 0.3 !important;
+    background: rgba(255, 0, 0, 0.2) !important;
+    border: 1px dashed red !important;
   }
   
   /* Show the actual red T-shapes from SVG on hover */
