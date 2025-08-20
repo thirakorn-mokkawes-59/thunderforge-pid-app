@@ -159,7 +159,8 @@
         
         // Detect symbol type based on path or name
         const isTankFloatingRoof = data.symbolPath?.includes('tank_floating_roof');
-        const isVesselGeneral = data.symbolPath?.includes('vessel_general');
+        const isVesselGeneral = data.symbolPath?.includes('vessel_general') && !data.symbolPath?.includes('vessel_general_column');
+        const isVesselGeneralColumn = data.symbolPath?.includes('vessel_general_column');
         const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
         const isPump = data.symbolPath?.includes('pump');
         const isCompressor = data.symbolPath?.includes('compressor');
@@ -250,6 +251,40 @@
                 }
                 if (transform.includes('translate(13 46)') && !transform.includes('rotate')) {
                   tJunctions.bottom.v = { transform, element: el };
+                }
+                
+              } else if (isVesselGeneralColumn) {
+                // Vessel General Column specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(10 1.957)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(12 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(20.043 23)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(23 22)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(10 44.043)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(12 44.043)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0.043 23)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 22)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
                 }
                 
               } else if (isTankGeneralBasin) {
@@ -401,6 +436,9 @@
         } else if (isVesselGeneral) {
           mainGroupOffsetX = 19.5;
           mainGroupOffsetY = 8.5;
+        } else if (isVesselGeneralColumn) {
+          mainGroupOffsetX = 21.5;
+          mainGroupOffsetY = 8.5;
         } else if (isTankGeneralBasin) {
           mainGroupOffsetX = 7.5;
           mainGroupOffsetY = 13.5;
@@ -465,6 +503,20 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (13)
                   intersectionY = hY; // Use horizontal line Y (46)
+                }
+              } else if (isVesselGeneralColumn) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (12)
+                  intersectionY = hY; // Use horizontal line Y (1.957)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T (0.043 + 1 = 1.043)
+                  intersectionY = hY; // Use horizontal line Y (23)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (20.043 + 1.5 = 21.543)
+                  intersectionY = hY; // Use horizontal line Y (23)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (12)
+                  intersectionY = hY; // Use horizontal line Y (44.043)
                 }
               } else if (isTankGeneralBasin) {
                 if (position === 'top') {
