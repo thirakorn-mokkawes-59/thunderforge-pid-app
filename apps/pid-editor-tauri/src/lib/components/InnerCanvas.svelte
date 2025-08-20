@@ -141,10 +141,10 @@
       color: conn.style.strokeColor
     },
     interactionWidth: 0,
-    // Larger negative offset to ensure no gaps at any connection
+    // Use larger uniform offset to handle worst case (vessels)
     data: { 
-      offsetStart: -12,  // Extend 12px into source symbol to reach T-shape
-      offsetEnd: -12     // Extend 12px into target symbol to reach T-shape
+      offsetStart: -20,  // Extend 20px to ensure reaching all T-shapes
+      offsetEnd: -20     // Extend 20px to ensure reaching all T-shapes
     }
   }));
 
