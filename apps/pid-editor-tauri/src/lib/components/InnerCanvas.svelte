@@ -143,8 +143,8 @@
     interactionWidth: 0,
     // Use larger uniform offset to handle worst case (vessels)
     data: { 
-      offsetStart: -20,  // Extend 20px to ensure reaching all T-shapes
-      offsetEnd: -20     // Extend 20px to ensure reaching all T-shapes
+      offsetStart: -22,  // Extend 22px to ensure reaching all T-shapes
+      offsetEnd: -22     // Extend 22px to ensure reaching all T-shapes
     }
   }));
 
