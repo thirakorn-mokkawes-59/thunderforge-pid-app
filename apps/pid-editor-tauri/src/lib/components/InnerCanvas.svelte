@@ -140,12 +140,8 @@
       height: 8,
       color: conn.style.strokeColor
     },
-    interactionWidth: 0,
-    // Use negative offset to extend edges INTO the symbols
-    data: { 
-      offsetStart: -10,  // Extend 10px into source symbol
-      offsetEnd: -10     // Extend 10px into target symbol
-    }
+    interactionWidth: 0
+    // No offset needed since handles are now 1px and positioned exactly at T-shapes
   }));
 
   // Snap position to grid if enabled

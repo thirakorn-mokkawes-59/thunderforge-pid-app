@@ -156,7 +156,6 @@
           id: `handle-${index}`
         }));
         
-        
         // Hide red elements initially instead of removing them
         redElements.forEach(el => {
           el.setAttribute('class', 'connection-indicator');
@@ -352,6 +351,15 @@
   
   <!-- Add dual handles at connection points for true bidirectional connections -->
   {#each connectionPoints as point, i}
+    <!-- Debug: Show exact T-shape center -->
+    {#if DEBUG_HANDLES}
+      <div 
+        class="debug-t-center" 
+        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%;"
+        title="T-shape center"
+      ></div>
+    {/if}
+    
     <!-- Target handle for incoming connections -->
     <Handle
       type="target"
@@ -554,11 +562,11 @@
     top: 50%;
   }
   
-  /* Connection handles - larger hit area for easier interaction */
+  /* Connection handles - small actual handle for precise connection */
   :global(.connection-handle) {
-    /* Increased from 1px to 20px for much easier clicking/dragging */
-    width: 20px !important;
-    height: 20px !important;
+    /* Small handle for precise edge connection */
+    width: 1px !important;
+    height: 1px !important;
     background: transparent !important;
     border: none !important;
     /* Center the handle exactly on the T-shape */
@@ -571,8 +579,22 @@
     transition: opacity 0.2s, transform 0.2s;
   }
   
+  /* Create larger hit area using ::before pseudo-element */
+  :global(.connection-handle::before) {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: transparent;
+    pointer-events: all;
+    cursor: crosshair;
+  }
+  
   /* Show a subtle circle on hover for visual feedback */
-  :global(.connection-handle:hover) {
+  :global(.connection-handle:hover::before) {
     opacity: 0.4 !important;
     background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0.2) 50%, transparent 70%) !important;
     animation: pulse-handle 1.5s ease-in-out infinite;
@@ -615,6 +637,18 @@
     opacity: 0.3 !important;
     background: rgba(255, 0, 0, 0.2) !important;
     border: 1px dashed red !important;
+  }
+  
+  /* Debug T-shape center marker */
+  .debug-t-center {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: lime;
+    border: 1px solid darkgreen;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: none;
   }
   
   /* Show the actual red T-shapes from SVG on hover */
