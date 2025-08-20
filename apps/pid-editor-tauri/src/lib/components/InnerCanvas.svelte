@@ -140,8 +140,12 @@
       height: 8,
       color: conn.style.strokeColor
     },
-    interactionWidth: 0
-    // No offset needed since handles are now 1px and positioned exactly at T-shapes
+    interactionWidth: 0,
+    // Negative offset to completely eliminate gaps
+    data: { 
+      offsetStart: -5,  // Extend 5px into source symbol
+      offsetEnd: -5     // Extend 5px into target symbol
+    }
   }));
 
   // Snap position to grid if enabled
