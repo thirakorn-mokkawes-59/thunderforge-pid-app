@@ -14,7 +14,7 @@
     useSvelteFlow
   } from '@xyflow/svelte';
   import PIDSymbolNode from './PIDSymbolNode.svelte';
-  import CustomEdge from './CustomEdge.svelte';
+  import PIDEdge from './PIDEdge.svelte';
   import { diagram } from '$lib/stores/diagram';
   import { clipboard } from '$lib/stores/clipboard';
 
@@ -23,9 +23,9 @@
     pidSymbol: PIDSymbolNode
   };
 
-  // Define custom edge types
+  // Define custom edge types  
   const edgeTypes: EdgeTypes = {
-    custom: CustomEdge
+    custom: PIDEdge  // PID-style edge with sharp triangular arrow
   };
 
   // Initialize arrays for nodes and edges
@@ -153,12 +153,13 @@
         type: 'custom', // USE CUSTOM EDGE TYPE THAT SUPPORTS OFFSETS
         animated: false,
         style: `stroke: ${conn.style.strokeColor || '#000000'}; stroke-width: 1px;`,
-        markerEnd: {
-          type: MarkerType.Arrow,
-          width: 8,
-          height: 8,
-          color: conn.style.strokeColor || '#000000'
-        },
+        // DISABLED markerEnd to test if custom edge is working
+        // markerEnd: {
+        //   type: MarkerType.Arrow,
+        //   width: 8,
+        //   height: 8,
+        //   color: conn.style.strokeColor || '#000000'
+        // },
         interactionWidth: 0,
         // Pass node data for auto-calculation of offsets using T-intersection depths
         data: { 

@@ -69,9 +69,10 @@
   $: sourceNodeId = data?.sourceNodeId;
   $: targetNodeId = data?.targetNodeId;
   
-  // Since handles are now positioned exactly at T-junctions, no offset needed for flush connections
-  $: offsetStart = 0; // No offset - handles are at precise T-junction positions
-  $: offsetEnd = 0;   // No offset - handles are at precise T-junction positions
+  // Calculate offset based on handle dimensions (8px square, no border)
+  // Half of handle size = 4px
+  $: offsetStart = 4; // 4px offset for 8px handle
+  $: offsetEnd = 4;   // 4px offset for 8px handle
 
   // Calculate extended path with offsets using step path
   $: extendedPath = (() => {

@@ -252,8 +252,10 @@
           mainGroupOffsetY = 13.5;
         }
         
-        // Process each T-junction
-        Object.entries(tJunctions).forEach(([position, junction]) => {
+        // Process each T-junction in the correct order (top, right, bottom, left)
+        const orderedPositions = ['top', 'right', 'bottom', 'left'];
+        orderedPositions.forEach(position => {
+          const junction = tJunctions[position];
           if (junction.h && junction.v) {
             console.log(`Processing ${position} T-junction`);
             
@@ -322,17 +324,27 @@
               const scaledX = absoluteX * scaleX;
               const scaledY = absoluteY * scaleY;
               
-              // Determine Position enum value
+              // Determine Position enum value and handle index
               let positionEnum;
-              if (position === 'top') positionEnum = Position.Top;
-              else if (position === 'right') positionEnum = Position.Right;
-              else if (position === 'bottom') positionEnum = Position.Bottom;
-              else if (position === 'left') positionEnum = Position.Left;
+              let handleIndex;
+              if (position === 'top') {
+                positionEnum = Position.Top;
+                handleIndex = 0;
+              } else if (position === 'right') {
+                positionEnum = Position.Right;
+                handleIndex = 1;
+              } else if (position === 'bottom') {
+                positionEnum = Position.Bottom;
+                handleIndex = 2;
+              } else if (position === 'left') {
+                positionEnum = Position.Left;
+                handleIndex = 3;
+              }
               
               junctionPoints.push({
                 x: scaledX,
                 y: scaledY,
-                id: `handle-${junctionPoints.length}`,
+                id: `handle-${handleIndex}`,
                 position: positionEnum
               });
               
@@ -852,14 +864,14 @@
     top: 50%;
   }
   
-  /* Connection handles - visible circular handles */
+  /* Connection handles - visible square handles */
   :global(.connection-handle) {
     /* Visible handle for connection */
     width: 8px !important;
     height: 8px !important;
-    background: #fff !important;
-    border: 2px solid #555 !important;
-    border-radius: 50% !important;
+    background: #ff0000 !important;
+    border: none !important;
+    border-radius: 0% !important;
     overflow: visible !important;
     cursor: crosshair;
     pointer-events: all;
