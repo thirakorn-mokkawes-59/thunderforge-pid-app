@@ -161,6 +161,11 @@
         const isTankFloatingRoof = data.symbolPath?.includes('tank_floating_roof');
         const isVesselGeneral = data.symbolPath?.includes('vessel_general');
         const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
+        const isPump = data.symbolPath?.includes('pump');
+        const isCompressor = data.symbolPath?.includes('compressor');
+        const isValve = data.symbolPath?.includes('valves');
+        const isInstrument = data.symbolPath?.includes('instruments');
+        const isHeatExchanger = data.symbolPath?.includes('heat_exchanger');
         
         // Find all 4 T-junctions based on symbol type
         const tJunctions = {
@@ -280,6 +285,105 @@
                 if (transform.includes('translate(25 36)') && !transform.includes('rotate')) {
                   tJunctions.bottom.v = { transform, element: el };
                 }
+                
+              } else if (isPump || isCompressor) {
+                // Pump and Compressor specific patterns (circular symbols)
+                // TOP T-junction
+                if (transform.includes('translate(20 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(40 22)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(43 21)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(20 42)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 42)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 22)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 21)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isValve) {
+                // Valve specific patterns
+                // Valves typically have left and right T-junctions only
+                // RIGHT T-junction
+                if ((transform.includes('translate(52.5 2.5)') || transform.includes('translate(22.5 2.5)')) && !transform.includes('rotate')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                if ((transform.includes('translate(52.5 5)') || transform.includes('translate(22.5 5)')) && !transform.includes('rotate')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(2.5 2.5)') && transform.includes('rotate(180')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                if (transform.includes('translate(0 5)') && transform.includes('rotate(180')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                
+                // Some valves have additional center T-junctions
+                if (transform.includes('translate(27.5 2.5)') && !transform.includes('rotate')) {
+                  // Center-top junction
+                  tJunctions.top.v = { transform, element: el };
+                }
+                if (transform.includes('translate(27.5 5)') && !transform.includes('rotate')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                
+              } else if (isInstrument) {
+                // Instrument specific patterns (circular symbols like pumps)
+                // Similar to pump but with different offsets
+                // TOP T-junction
+                if (transform.includes('translate(20 2.5)') || transform.includes('translate(22.5 0)')) {
+                  if (transform.includes('rotate(180') || !transform.includes('rotate')) {
+                    const isH = transform.includes('translate(20');
+                    if (isH) tJunctions.top.h = { transform, element: el };
+                    else tJunctions.top.v = { transform, element: el };
+                  }
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(40 22.5)') || transform.includes('translate(43.75 21.25)')) {
+                  if (transform.includes('rotate(90') || transform.includes('rotate(270')) {
+                    const isH = transform.includes('translate(40');
+                    if (isH) tJunctions.right.h = { transform, element: el };
+                    else tJunctions.right.v = { transform, element: el };
+                  }
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(20 42.5)') || transform.includes('translate(22.5 42.5)')) {
+                  const isH = transform.includes('translate(20');
+                  if (isH) tJunctions.bottom.h = { transform, element: el };
+                  else tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 22.5)') || transform.includes('translate(1.25 21.25)')) {
+                  if (transform.includes('rotate(270') || transform.includes('rotate(90')) {
+                    const isH = transform.includes('translate(0 22');
+                    if (isH) tJunctions.left.h = { transform, element: el };
+                    else tJunctions.left.v = { transform, element: el };
+                  }
+                }
               }
             }
           }
@@ -300,6 +404,18 @@
         } else if (isTankGeneralBasin) {
           mainGroupOffsetX = 7.5;
           mainGroupOffsetY = 13.5;
+        } else if (isPump || isCompressor) {
+          mainGroupOffsetX = 10.5;
+          mainGroupOffsetY = 10.5;
+        } else if (isValve) {
+          mainGroupOffsetX = 10;
+          mainGroupOffsetY = 27.5;
+        } else if (isInstrument) {
+          mainGroupOffsetX = 10;
+          mainGroupOffsetY = 10;
+        } else if (isHeatExchanger) {
+          mainGroupOffsetX = 5;
+          mainGroupOffsetY = 5;
         }
         
         // Process each T-junction in the correct order (top, right, bottom, left)
@@ -363,6 +479,67 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (25)
                   intersectionY = hY; // Use horizontal line Y (36)
+                }
+              } else if (isPump || isCompressor) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T (0 + 2 = 2)
+                  intersectionY = hY; // Use horizontal line Y (22)
+                } else if (position === 'right') {
+                  intersectionX = hX + 2; // Center of right T (40 + 2 = 42)
+                  intersectionY = hY; // Use horizontal line Y (22)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (42)
+                }
+              } else if (isValve) {
+                // Valves have variable positions based on type
+                if (position === 'left') {
+                  intersectionX = hX + 1.25; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (5)
+                } else if (position === 'right') {
+                  // Check if it's a right-side or center junction
+                  if (hX > 40) {
+                    intersectionX = hX + 1.25; // Right side valve junction
+                  } else {
+                    intersectionX = hX; // Center junction for 3-way valves
+                  }
+                  intersectionY = hY; // Use horizontal line Y (5)
+                } else if (position === 'top' || position === 'bottom') {
+                  // Some valves have vertical connections
+                  intersectionX = vX; // Use vertical line X
+                  intersectionY = hY; // Use horizontal line Y
+                }
+              } else if (isInstrument) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (22.5)
+                  intersectionY = hY; // Use horizontal line Y (2.5)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1.25; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (22.5)
+                } else if (position === 'right') {
+                  intersectionX = hX + 2.5; // Center of right T
+                  intersectionY = hY; // Use horizontal line Y (22.5)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (22.5)
+                  intersectionY = hY; // Use horizontal line Y (42.5)
+                }
+              } else if (isHeatExchanger) {
+                // Heat exchangers have variable sizes, use relative positioning
+                if (position === 'top') {
+                  intersectionX = vX;
+                  intersectionY = hY;
+                } else if (position === 'left') {
+                  intersectionX = hX + 1;
+                  intersectionY = hY;
+                } else if (position === 'right') {
+                  intersectionX = hX + 1;
+                  intersectionY = hY;
+                } else if (position === 'bottom') {
+                  intersectionX = vX;
+                  intersectionY = hY;
                 }
               }
               
