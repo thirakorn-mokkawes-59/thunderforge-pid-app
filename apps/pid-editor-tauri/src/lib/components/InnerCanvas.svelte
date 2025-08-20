@@ -43,6 +43,7 @@
   // Track if we're updating nodes programmatically
   let updatingNodes = false;
   let creatingConnection = false;
+  let updatingAfterDrag = false;
 
   // Track which nodes have been initialized (to distinguish from new nodes)
   // Using $: to make it reactive but stable
@@ -62,7 +63,7 @@
   
   // Convert diagram elements to nodes - ONLY use diagram positions for truly new nodes
   // Force reactivity on zIndex changes by including it in the reactive dependencies
-  $: if (!updatingNodes && !creatingConnection) {
+  $: if (!updatingNodes && !creatingConnection && !updatingAfterDrag) {
     // Extract zIndex values to ensure reactivity
     const zIndexValues = $diagram.elements.map(e => e.zIndex || 0);
     
@@ -166,6 +167,12 @@
       // Check if both nodes exist
       const sourceNode = nodes.find(n => n.id === conn.from.elementId);
       const targetNode = nodes.find(n => n.id === conn.to.elementId);
+      
+      // Skip if we're in the middle of updating after drag
+      if (updatingAfterDrag) {
+        return sourceNode && targetNode;
+      }
+      
       return sourceNode && targetNode;
     }).map(conn => {
       // Find source and target nodes to get their data
@@ -252,17 +259,26 @@
         : n
     );
     
+    // Set flag to prevent edge recreation during diagram update
+    updatingAfterDrag = true;
+    
     // Update diagram store with center position
     const newX = snappedPosition.x + node.data.width / 2;
     const newY = snappedPosition.y + node.data.height / 2;
-    diagram.updateElement(node.id, {
-      x: newX,
-      y: newY
-    });
     
+    // Delay the diagram update slightly to let handles stabilize
     setTimeout(() => {
-      updatingNodes = false;
-    }, 50); // Reduced timeout for faster response
+      diagram.updateElement(node.id, {
+        x: newX,
+        y: newY
+      });
+      
+      // Re-enable updates after a short delay
+      setTimeout(() => {
+        updatingAfterDrag = false;
+        updatingNodes = false;
+      }, 100);
+    }, 50);
   }
 
   // Validate connections
