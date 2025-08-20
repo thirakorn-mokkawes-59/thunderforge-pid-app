@@ -143,10 +143,16 @@
   // Extract stroke color and width from style if provided (reactive)
   $: strokeColor = style?.match(/stroke:\s*([^;]+)/)?.[1] || '#000000';
   $: strokeWidthMatch = style?.match(/stroke-width:\s*([\d.]+)px?/)?.[1];
-  $: strokeWidth = strokeWidthMatch ? parseFloat(strokeWidthMatch) : 0.5;
+  // Use strokeWidth from data if available, otherwise parse from style, default to 0.5
+  $: strokeWidth = data?.strokeWidth || (strokeWidthMatch ? parseFloat(strokeWidthMatch) : 0.5);
   
   // Debug logging
-  $: console.log(`[PIDEdge ${id}] Stroke width:`, { style, strokeWidthMatch, strokeWidth });
+  $: console.log(`[PIDEdge ${id}] Stroke width:`, { 
+    style, 
+    strokeWidthMatch, 
+    dataStrokeWidth: data?.strokeWidth,
+    finalStrokeWidth: strokeWidth 
+  });
 </script>
 
 <g>

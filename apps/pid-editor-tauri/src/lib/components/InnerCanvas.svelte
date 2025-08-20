@@ -31,10 +31,9 @@
     pidSymbol: PIDSymbolNode
   };
 
-  // Define custom edge types - use dynamic key to bypass module cache
+  // Define custom edge types
   const edgeTypes: EdgeTypes = {
-    custom: PIDEdge,  // PID-style edge with sharp triangular arrow
-    [`custom_${Date.now()}`]: PIDEdge  // Backup with timestamp to force fresh registration
+    custom: PIDEdge  // PID-style edge with sharp triangular arrow
   };
 
   // Initialize arrays for nodes and edges
@@ -199,8 +198,9 @@
         // Ensure handle indices are within our fixed range (0-3)
         sourceHandle: `handle-${Math.min(conn.from.pointIndex || 0, 3)}`,
         targetHandle: `handle-${Math.min(conn.to.pointIndex || 0, 3)}`,
-        type: 'custom', // USE CUSTOM EDGE TYPE THAT SUPPORTS OFFSETS
+        type: 'custom', // USE CUSTOM EDGE TYPE
         animated: false,
+        // Pass stroke width in data as well as style for redundancy
         style: `stroke: ${conn.style.strokeColor || '#000000'}; stroke-width: ${edgeStrokeWidth}px;`,
         // DISABLED markerEnd to test if custom edge is working
         // markerEnd: {
@@ -217,7 +217,8 @@
           sourceNodeId: conn.from.elementId, // Pass source node ID for T-depth lookup
           targetNodeId: conn.to.elementId,   // Pass target node ID for T-depth lookup
           version: edgeVersion,  // Pass version to force update
-          forceUpdate: Date.now() // Add timestamp to force recalculation
+          forceUpdate: Date.now(), // Add timestamp to force recalculation
+          strokeWidth: edgeStrokeWidth // Pass stroke width directly in data
           // offsetStart and offsetEnd will be auto-calculated based on T-intersection positions
         }
       };
