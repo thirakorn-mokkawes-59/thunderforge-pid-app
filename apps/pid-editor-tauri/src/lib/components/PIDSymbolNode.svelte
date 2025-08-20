@@ -438,10 +438,8 @@
                   tJunctions.left.v = { transform, element: el };
                 }
                 
-              } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
-                // Vessel with coils/jacket - has multiple T-junctions on sides
-                // We need to track all connection points, not just in tJunctions structure
-                
+              } else if (isVesselFullTubeCoil) {
+                // Vessel Full Tube Coil - has 2 T-junctions on each side
                 // TOP T-junction
                 if (transform.includes('translate(20.023 2)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
@@ -456,6 +454,140 @@
                 }
                 if (transform.includes('translate(22 46)') && !transform.includes('rotate')) {
                   tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // Handle multiple T-junctions on sides
+                // RIGHT - First junction (upper)
+                if (transform.includes('translate(40.023 9)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(43.011 8.011)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                // RIGHT - Second junction (lower)
+                if (transform.includes('translate(40.023 31)') && transform.includes('rotate(270')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'right2',
+                    h: { transform, element: el },
+                    x: 40.023,
+                    y: 31
+                  });
+                }
+                if (transform.includes('translate(43.011 30.011)') && transform.includes('rotate(270')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'right2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+                }
+                
+                // LEFT - First junction (upper)
+                if (transform.includes('translate(-0.023 17)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(0.989 16.011)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                // LEFT - Second junction (lower)
+                if (transform.includes('translate(-0.023 40)') && transform.includes('rotate(90')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'left2',
+                    h: { transform, element: el },
+                    x: -0.023,
+                    y: 40
+                  });
+                }
+                if (transform.includes('translate(0.989 39.011)') && transform.includes('rotate(90')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'left2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+                }
+                
+              } else if (isVesselSemiTubeCoil) {
+                // Vessel Semi Tube Coil - also has 2 T-junctions on each side
+                // TOP T-junction
+                if (transform.includes('translate(16 1.979)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(18 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(16 46.021)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(18 46.021)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // Handle multiple T-junctions on sides
+                // RIGHT - First junction (upper)
+                if (transform.includes('translate(32 9)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(35 8)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                // RIGHT - Second junction (lower)
+                if (transform.includes('translate(32 31)') && transform.includes('rotate(270')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'right2',
+                    h: { transform, element: el },
+                    x: 32,
+                    y: 31
+                  });
+                }
+                if (transform.includes('translate(35 30)') && transform.includes('rotate(270')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'right2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+                }
+                
+                // LEFT - First junction (upper)
+                if (transform.includes('translate(0 17)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 16)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                // LEFT - Second junction (lower)
+                if (transform.includes('translate(0 39)') && transform.includes('rotate(90')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'left2',
+                    h: { transform, element: el },
+                    x: 0,
+                    y: 39
+                  });
+                }
+                if (transform.includes('translate(1 38)') && transform.includes('rotate(90')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'left2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+                }
+                
+              } else if (isVesselJacketed) {
+                // Vessel Jacketed - may have different patterns
+                // TOP T-junction
+                if (transform.includes('translate(20.023 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
                 }
                 
                 // RIGHT T-junctions - Store both positions for vessel full tube coil
