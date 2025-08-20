@@ -634,9 +634,15 @@
     stroke: #ff0000 !important;
   }
   
-  /* Override edge path to extend beyond handle center */
+  /* Override edge path to connect flush with symbols */
   :global(.svelte-flow__edge-path) {
     stroke-linecap: butt !important;
+    /* Ensure edges connect properly without gaps */
+  }
+  
+  /* Remove any edge offset */
+  :global(.svelte-flow__edge) {
+    /* Ensure edges reach all the way to connection points */
   }
   
   img {

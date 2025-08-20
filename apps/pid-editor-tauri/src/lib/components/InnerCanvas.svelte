@@ -136,12 +136,14 @@
     style: `stroke: ${conn.style.strokeColor}; stroke-width: 0.37px;`,
     markerEnd: {
       type: MarkerType.Arrow,
-      width: 10,
-      height: 10,
-      color: conn.style.strokeColor
+      width: 8,
+      height: 8,
+      color: conn.style.strokeColor,
+      markerUnits: 'strokeWidth',
+      orient: 'auto'
     },
-    interactionWidth: 0,
-    data: { offsetEnd: 5 }
+    interactionWidth: 0
+    // Removed offsetEnd to make edges connect directly to T-shapes
   }));
 
   // Snap position to grid if enabled
