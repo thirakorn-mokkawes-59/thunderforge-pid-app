@@ -167,6 +167,12 @@
         const isVesselSpherical = data.symbolPath?.includes('vessel_spherical');
         const isVesselFixedBed = data.symbolPath?.includes('vessel_fixed_bed');
         const isVesselFluidizedBed = data.symbolPath?.includes('vessel_fluidized_bed');
+        const isVesselFullTubeCoil = data.symbolPath?.includes('vessel_full_tube_coil');
+        const isVesselSemiTubeCoil = data.symbolPath?.includes('vessel_semi_tube_coil');
+        const isVesselJacketed = data.symbolPath?.includes('vessel_jacketed');
+        const isStorageContainer = data.symbolPath?.includes('storage_container');
+        const isStorageBag = data.symbolPath?.includes('storage_bag');
+        const isStorageBarrelDrum = data.symbolPath?.includes('storage_barrel_drum');
         const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
         const isPump = data.symbolPath?.includes('pump');
         const isCompressor = data.symbolPath?.includes('compressor');
@@ -429,6 +435,108 @@
                   tJunctions.left.v = { transform, element: el };
                 }
                 
+              } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
+                // Vessel with coils/jacket - has multiple T-junctions on sides
+                // TOP T-junction
+                if (transform.includes('translate(20.023 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junctions (may have multiple)
+                if ((transform.includes('translate(40.023 9)') || transform.includes('translate(40.023 31)')) && transform.includes('rotate(270')) {
+                  if (!tJunctions.right.h) tJunctions.right.h = { transform, element: el };
+                }
+                if ((transform.includes('translate(43.011 8.011)') || transform.includes('translate(43.011 30.011)')) && transform.includes('rotate(270')) {
+                  if (!tJunctions.right.v) tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(20.023 46)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 46)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junctions (may have multiple)
+                if ((transform.includes('translate(-0.023 17)') || transform.includes('translate(-0.023 40)')) && transform.includes('rotate(90')) {
+                  if (!tJunctions.left.h) tJunctions.left.h = { transform, element: el };
+                }
+                if ((transform.includes('translate(0.989 16.011)') || transform.includes('translate(0.989 39.011)')) && transform.includes('rotate(90')) {
+                  if (!tJunctions.left.v) tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isStorageContainer) {
+                // Storage Container specific patterns (rectangular)
+                // TOP T-junction
+                if (transform.includes('translate(22 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(24 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(44 11)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(47 10)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(22 22)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(24 22)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 11)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 10)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isStorageBarrelDrum || isStorageBag) {
+                // Storage Barrel/Drum and Bag specific patterns (cylindrical)
+                // TOP T-junction
+                if (transform.includes('translate(10 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(12 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(18 18)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(21 17)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(10 35)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(12 35)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(1 18)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(2 17)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
               } else if (isTankGeneralBasin) {
                 // Tank General Basin specific patterns
                 // TOP T-junction
@@ -593,6 +701,15 @@
         } else if (isVesselSpherical) {
           mainGroupOffsetX = 10.5;
           mainGroupOffsetY = 8.5;
+        } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
+          mainGroupOffsetX = 10.5;
+          mainGroupOffsetY = 8.5;
+        } else if (isStorageContainer) {
+          mainGroupOffsetX = 8.5;
+          mainGroupOffsetY = 21.5;
+        } else if (isStorageBarrelDrum || isStorageBag) {
+          mainGroupOffsetX = 20.5;
+          mainGroupOffsetY = 14.5;
         } else if (isTankGeneralBasin) {
           mainGroupOffsetX = 7.5;
           mainGroupOffsetY = 13.5;
@@ -728,6 +845,48 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (22)
                   intersectionY = hY; // Use horizontal line Y (43.822)
+                }
+              } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T (use first junction)
+                  intersectionY = hY; // Use horizontal line Y (17 or 40)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (use first junction)
+                  intersectionY = hY; // Use horizontal line Y (9 or 31)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (46)
+                }
+              } else if (isStorageContainer) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (24)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (11)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T
+                  intersectionY = hY; // Use horizontal line Y (11)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (24)
+                  intersectionY = hY; // Use horizontal line Y (22)
+                }
+              } else if (isStorageBarrelDrum || isStorageBag) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (12)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1.5; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (18)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T
+                  intersectionY = hY; // Use horizontal line Y (18)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (12)
+                  intersectionY = hY; // Use horizontal line Y (35)
                 }
               } else if (isTankGeneralBasin) {
                 if (position === 'top') {
