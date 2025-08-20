@@ -181,6 +181,11 @@
         });
       }
       
+      // Get stroke width from nodes (use average if different, default to 0.5)
+      const sourceStrokeWidth = sourceNode?.data?.strokeWidth || 0.5;
+      const targetStrokeWidth = targetNode?.data?.strokeWidth || 0.5;
+      const edgeStrokeWidth = (sourceStrokeWidth + targetStrokeWidth) / 2;
+      
       return {
         id: `${conn.id}_v${edgeVersion}`, // Add version to force new instance
         source: conn.from.elementId,
@@ -190,7 +195,7 @@
         targetHandle: `handle-${Math.min(conn.to.pointIndex || 0, 3)}`,
         type: 'custom', // USE CUSTOM EDGE TYPE THAT SUPPORTS OFFSETS
         animated: false,
-        style: `stroke: ${conn.style.strokeColor || '#000000'}; stroke-width: 1px;`,
+        style: `stroke: ${conn.style.strokeColor || '#000000'}; stroke-width: ${edgeStrokeWidth}px;`,
         // DISABLED markerEnd to test if custom edge is working
         // markerEnd: {
         //   type: MarkerType.Arrow,

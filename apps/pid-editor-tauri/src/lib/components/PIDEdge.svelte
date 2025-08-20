@@ -140,8 +140,10 @@
     recalculatePath();
   }
   
-  // Extract stroke color from style if provided
+  // Extract stroke color and width from style if provided
   const strokeColor = style?.match(/stroke:\s*([^;]+)/)?.[1] || '#000000';
+  const strokeWidthMatch = style?.match(/stroke-width:\s*([\d.]+)/)?.[1];
+  const strokeWidth = strokeWidthMatch ? parseFloat(strokeWidthMatch) : 0.5;
 </script>
 
 <g>
@@ -151,7 +153,7 @@
     d={edgePath}
     fill="none"
     stroke={strokeColor}
-    stroke-width="2"
+    stroke-width={strokeWidth}
     marker-end="url(#sharp-arrow-marker)"
     class="svelte-flow__edge-path"
     {style}
