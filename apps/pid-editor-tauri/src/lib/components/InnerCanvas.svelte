@@ -706,8 +706,9 @@
     // On page reload, we need to completely recreate edges to bypass cache
     // Check if we have existing connections (means we're loading from localStorage)
     const hasExistingConnections = $diagram.connections.length > 0;
+    const hasExistingElements = $diagram.elements.length > 0;
     
-    if (hasExistingConnections) {
+    if (hasExistingConnections || hasExistingElements) {
       // Clear edges completely first to force fresh calculation
       edges = [];
       canCreateEdges = false;
@@ -722,10 +723,21 @@
         edgeVersion++; // Force new edge instances
         await tick();
         
-        // Force a second update to ensure proper positioning
-        setTimeout(() => {
-          edgeVersion++;
-        }, 100);
+        // Fit view to trigger complete viewport recalculation
+        // This forces SvelteFlow to recalculate all positions
+        if (flowInstance && hasExistingElements) {
+          setTimeout(() => {
+            flowInstance.fitView({
+              padding: 0.1,
+              duration: 200 // Smooth animation
+            });
+            
+            // After fit view, force another edge update
+            setTimeout(() => {
+              edgeVersion++;
+            }, 250);
+          }, 100);
+        }
       }, 300);
     } else {
       // Normal initialization for new diagrams
@@ -808,6 +820,17 @@
       canCreateEdges = false;
       nodesReady = false;
       edges = []; // Clear any cached edges
+      
+      // Also trigger a fit view after nodes are loaded
+      setTimeout(() => {
+        if (flowInstance && nodes.length > 0) {
+          // Initial fit view to ensure viewport is set correctly
+          flowInstance.fitView({
+            padding: 0.15,
+            duration: 0 // No animation for initial load
+          });
+        }
+      }, 500);
     } else {
       // For new diagrams, we can enable edge creation sooner
       setTimeout(() => {
