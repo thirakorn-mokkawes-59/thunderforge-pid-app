@@ -162,6 +162,7 @@
         const isVesselGeneral = data.symbolPath?.includes('vessel_general') && !data.symbolPath?.includes('vessel_general_column');
         const isVesselGeneralColumn = data.symbolPath?.includes('vessel_general_column');
         const isVesselConicalHead = data.symbolPath?.includes('vessel_conical_head');
+        const isVesselDishedHead = data.symbolPath?.includes('vessel_dished_head');
         const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
         const isPump = data.symbolPath?.includes('pump');
         const isCompressor = data.symbolPath?.includes('compressor');
@@ -322,6 +323,40 @@
                   tJunctions.left.v = { transform, element: el };
                 }
                 
+              } else if (isVesselDishedHead) {
+                // Vessel Dished Head specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(12 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(14 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(24 21)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(27 20)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(12 39)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(14 39)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 21)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 20)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
               } else if (isTankGeneralBasin) {
                 // Tank General Basin specific patterns
                 // TOP T-junction
@@ -477,6 +512,9 @@
         } else if (isVesselConicalHead) {
           mainGroupOffsetX = 19.5;
           mainGroupOffsetY = 4.5;
+        } else if (isVesselDishedHead) {
+          mainGroupOffsetX = 18.5;
+          mainGroupOffsetY = 11.5;
         } else if (isTankGeneralBasin) {
           mainGroupOffsetX = 7.5;
           mainGroupOffsetY = 13.5;
@@ -569,6 +607,20 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (13)
                   intersectionY = hY; // Use horizontal line Y (50)
+                }
+              } else if (isVesselDishedHead) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (14)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T (0 + 2 = 2)
+                  intersectionY = hY; // Use horizontal line Y (21)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (24 + 1.5 = 25.5)
+                  intersectionY = hY; // Use horizontal line Y (21)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (14)
+                  intersectionY = hY; // Use horizontal line Y (39)
                 }
               } else if (isTankGeneralBasin) {
                 if (position === 'top') {
