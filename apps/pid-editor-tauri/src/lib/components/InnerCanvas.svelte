@@ -141,10 +141,10 @@
       color: conn.style.strokeColor
     },
     interactionWidth: 0,
-    // Negative offset to completely eliminate gaps
+    // Larger negative offset to ensure no gaps at any connection
     data: { 
-      offsetStart: -5,  // Extend 5px into source symbol
-      offsetEnd: -5     // Extend 5px into target symbol
+      offsetStart: -12,  // Extend 12px into source symbol to reach T-shape
+      offsetEnd: -12     // Extend 12px into target symbol to reach T-shape
     }
   }));
 

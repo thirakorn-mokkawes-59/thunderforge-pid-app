@@ -91,8 +91,22 @@
             const y1 = parseFloat(el.getAttribute('y1') || '0');
             const x2 = parseFloat(el.getAttribute('x2') || '0');
             const y2 = parseFloat(el.getAttribute('y2') || '0');
-            finalX = (x1 + x2) / 2;
-            finalY = (y1 + y2) / 2;
+            
+            // For horizontal lines (T-shape stem), use the center
+            if (Math.abs(y1 - y2) < 0.1) {
+              finalX = (x1 + x2) / 2;
+              finalY = y1;
+            }
+            // For vertical lines (T-shape cap), use the center
+            else if (Math.abs(x1 - x2) < 0.1) {
+              finalX = x1;
+              finalY = (y1 + y2) / 2;
+            }
+            // For diagonal lines, use midpoint
+            else {
+              finalX = (x1 + x2) / 2;
+              finalY = (y1 + y2) / 2;
+            }
           }
           
           // Get all transforms from element and parents
@@ -269,7 +283,8 @@
   
   // Calculate handle position as percentage - centered on T-shape
   function getHandleStyle(point: {x: number, y: number}) {
-    // No offset - position handle exactly at T-shape center
+    // Position handle exactly at T-shape center
+    // Ensure we're at the exact calculated position
     const left = `${(point.x / data.width) * 100}%`;
     const top = `${(point.y / data.height) * 100}%`;
     return `left: ${left}; top: ${top};`;
