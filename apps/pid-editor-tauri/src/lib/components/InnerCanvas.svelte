@@ -11,7 +11,8 @@
     type OnConnect,
     BackgroundVariant,
     MarkerType,
-    useSvelteFlow
+    useSvelteFlow,
+    useUpdateNodeInternals
   } from '@xyflow/svelte';
   import PIDSymbolNode from './PIDSymbolNode.svelte';
   import PIDEdge from './PIDEdge.svelte';
@@ -227,8 +228,8 @@
     });
     
     // Update node internals to recalculate handle positions
-    if (flowInstance && flowInstance.updateNodeInternals) {
-      flowInstance.updateNodeInternals(node.id);
+    if (updateNodeInternals) {
+      updateNodeInternals(node.id);
     }
     
     // Apply snap to grid if enabled
@@ -692,6 +693,7 @@
 
   let flowInstance: any = null;
   let nodesLocked = false;
+  let updateNodeInternals: (nodeId?: string | string[]) => void;
   
   function handleZoomChange(event: CustomEvent<{ type: 'in' | 'out' }>) {    
     if (!flowInstance) {
@@ -728,6 +730,7 @@
     
     const flow = useSvelteFlow();
     flowInstance = flow;
+    updateNodeInternals = useUpdateNodeInternals();
     
     // On page reload, we need to completely recreate edges to bypass cache
     // Check if we have existing connections (means we're loading from localStorage)
@@ -775,11 +778,9 @@
         const nodeIds = flowNodes.map(n => n.id);
         
         // Use updateNodeInternals to force handle recalculation
-        if (flowInstance.updateNodeInternals) {
+        if (updateNodeInternals) {
           console.log('[InnerCanvas] Updating node internals for:', nodeIds);
-          nodeIds.forEach(nodeId => {
-            flowInstance.updateNodeInternals(nodeId);
-          });
+          updateNodeInternals(nodeIds);
           await tick();
         }
         
@@ -804,10 +805,10 @@
               console.log('[InnerCanvas] Final update after fitView');
               
               // Update node internals one more time
-              const nodeIds = flowInstance.getNodes().map(n => n.id);
-              nodeIds.forEach(nodeId => {
-                flowInstance.updateNodeInternals(nodeId);
-              });
+              if (updateNodeInternals) {
+                const nodeIds = flowInstance.getNodes().map(n => n.id);
+                updateNodeInternals(nodeIds);
+              }
               
               // Then update edges
               setTimeout(() => {
@@ -882,6 +883,9 @@
   }
   
   onMount(() => {
+    // Initialize updateNodeInternals hook
+    updateNodeInternals = useUpdateNodeInternals();
+    
     window.addEventListener('toggle-connection-mode', handleConnectionModeToggle as EventListener);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('zoom-change', handleZoomChange as EventListener);
@@ -917,11 +921,9 @@
           // Update all node internals to force handle recalculation
           const nodeIds = nodes.map(n => n.id);
           console.log('[InnerCanvas] Early node internals update for:', nodeIds);
-          nodeIds.forEach(nodeId => {
-            if (flowInstance.updateNodeInternals) {
-              flowInstance.updateNodeInternals(nodeId);
-            }
-          });
+          if (updateNodeInternals) {
+            updateNodeInternals(nodeIds);
+          }
           
           // Then fit view to ensure viewport is set correctly
           setTimeout(() => {
