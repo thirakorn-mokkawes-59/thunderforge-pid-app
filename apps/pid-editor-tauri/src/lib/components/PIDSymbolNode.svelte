@@ -516,7 +516,9 @@
                 }
                 if (transform.includes('translate(0.989 39.011)') && transform.includes('rotate(90')) {
                   tJunctions.left2.v = { transform, element: el };
-                // LEFT - Second junction (lower)
+                }
+                
+                // LEFT - Second junction (lower) - duplicate check
                 if (transform.includes('translate(-0.023 40)') && transform.includes('rotate(90')) {
                   if (!additionalJunctions) additionalJunctions = [];
                   additionalJunctions.push({
@@ -1639,25 +1641,6 @@
         class="connection-handle"
         isConnectable={HANDLE_CONFIG.isConnectable}
         data-debug={debugInfo}
-      
-      <!-- Source handle at T-junction -->
-      <Handle
-        type="source"
-        position={handlePosition}
-        id={point.id}
-        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%; transform: translate(-50%, -50%);"
-        class="connection-handle connection-handle-source"
-        isConnectable={sourceHandlesEnabled}
-      />
-      
-      <!-- Target handle at T-junction (overlapping) -->
-      <Handle
-        type="target"
-        position={handlePosition}
-        id={point.id}
-        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%; transform: translate(-50%, -50%);"
-        class="connection-handle connection-handle-target"
-        isConnectable={targetHandlesEnabled}
       />
     {/each}
   {/if}
@@ -2025,11 +2008,6 @@
   
   :global(.connecting .connection-handle-source) {
     z-index: 99 !important;
-  /* Ensure both source and target handles overlap perfectly and are below edges */
-  :global(.connection-handle-source),
-  :global(.connection-handle-target) {
-    position: absolute;
-    z-index: 100 !important; /* Below edges (which are z-index 9999) */
   }
   
   /* Make valid connection targets more prominent during dragging */
