@@ -8,6 +8,12 @@
   import { handleVisibility } from '$lib/stores/handleVisibility';
   import { HANDLE_CONFIG, generateHandleId } from '$lib/config/handleConfig';
   
+  // New utilities
+  import { SVGParser } from '$lib/utils/svgParser';
+  import { TJunctionDetector } from '$lib/services/TJunctionDetector';
+  import { symbolCache } from '$lib/services/SymbolCache';
+  import type { ConnectionPoint } from '$lib/services/TJunctionDetector';
+  
   type $$Props = NodeProps;
   
   export let id: $$Props['id'];
@@ -63,7 +69,7 @@
   `;
   
   let svgContent = '';
-  let connectionPoints: Array<{x: number, y: number, id: string}> = [];
+  let connectionPoints: ConnectionPoint[] = [];
   let isLoading = true;
   let renderCount = 0;
   let initialDetectionComplete = false;
