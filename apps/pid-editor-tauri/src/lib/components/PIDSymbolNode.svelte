@@ -1267,21 +1267,6 @@
                   position: positionEnum
                 });
               }
-              // Determine Position enum value and handle index
-              let positionEnum;
-              let handleIndex;
-              if (position === 'top') {
-                positionEnum = Position.Top;
-                handleIndex = 0;
-              } else if (position === 'right') {
-                positionEnum = Position.Right;
-                handleIndex = 1;
-              } else if (position === 'bottom') {
-                positionEnum = Position.Bottom;
-                handleIndex = 2;
-              } else if (position === 'left') {
-                positionEnum = Position.Left;
-                handleIndex = 3;
               }
               
               junctionPoints.push({
@@ -1654,18 +1639,6 @@
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.top)}
       style="left: 50%; top: 0%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
-      type="source"
-      position={Position.Top}
-      id="handle-0"
-      style="left: 50%; top: 0%;"
-      isConnectable={sourceHandlesEnabled}
-    />
-    <Handle
-      type="target"
-      position={Position.Top}
-      id="handle-0"
-      style="left: 50%; top: 0%;"
-      isConnectable={targetHandlesEnabled}
     />
     
     <!-- Right Handle -->
@@ -1675,18 +1648,6 @@
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.right)}
       style="left: 100%; top: 50%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
-      type="source"
-      position={Position.Right}
-      id="handle-1"
-      style="left: 100%; top: 50%;"
-      isConnectable={sourceHandlesEnabled}
-    />
-    <Handle
-      type="target"
-      position={Position.Right}
-      id="handle-1"
-      style="left: 100%; top: 50%;"
-      isConnectable={targetHandlesEnabled}
     />
     
     <!-- Bottom Handle -->
@@ -1696,18 +1657,6 @@
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.bottom)}
       style="left: 50%; top: 100%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
-      type="source"
-      position={Position.Bottom}
-      id="handle-2"
-      style="left: 50%; top: 100%;"
-      isConnectable={sourceHandlesEnabled}
-    />
-    <Handle
-      type="target"
-      position={Position.Bottom}
-      id="handle-2"
-      style="left: 50%; top: 100%;"
-      isConnectable={targetHandlesEnabled}
     />
     
     <!-- Left Handle -->
@@ -1717,18 +1666,6 @@
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.left)}
       style="left: 0%; top: 50%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
-      type="source"
-      position={Position.Left}
-      id="handle-3"
-      style="left: 0%; top: 50%;"
-      isConnectable={sourceHandlesEnabled}
-    />
-    <Handle
-      type="target"
-      position={Position.Left}
-      id="handle-3"
-      style="left: 0%; top: 50%;"
-      isConnectable={targetHandlesEnabled}
     />
   {/if}
   
@@ -2035,6 +1972,8 @@
   
   :global(body.debug-pid-handles .connection-handle-target) {
     background: rgba(0, 0, 255, 0.5) !important;
+  }
+  
   /* Debug mode - visualize handle areas */
   :global(.debug-handle) {
     opacity: 0.3 !important;
