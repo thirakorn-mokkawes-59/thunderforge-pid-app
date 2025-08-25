@@ -57,7 +57,6 @@ Where `clean_name` is derived from the symbol's title in the original SVG.
 - Symbol SVGs are cleaned to ensure standard compliance (proper XML declarations, xmlns attributes)
 - Stroke attributes are normalized (width: 0.5, color: #000000)
 - The `_with_names` variant preserves original symbol titles as XML comments in the output files
-<<<<<<< HEAD
 - Both ISO and PIP standards use identical extraction logic but operate on different source data
 
 ## Critical Implementation Details - Connection Handles
@@ -87,6 +86,3 @@ The P&ID editor uses a specific handle configuration to ensure stable connection
    - Click on another handle to complete (acts as target)
    - Self-connections are blocked by configuration
    - Debug mode: Run `window.debugPIDHandles()` in console to visualize handle areas
-=======
-- Both ISO and PIP standards use identical extraction logic but operate on different source data
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517

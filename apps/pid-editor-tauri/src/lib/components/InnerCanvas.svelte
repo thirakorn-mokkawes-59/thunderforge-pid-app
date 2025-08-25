@@ -14,10 +14,7 @@
     useSvelteFlow,
     useUpdateNodeInternals
   } from '@xyflow/svelte';
-<<<<<<< HEAD
   import { parseHandleId, isValidConnection as validateConnection, HANDLE_CONFIG } from '$lib/config/handleConfig';
-=======
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   import PIDSymbolNode from './PIDSymbolNode.svelte';
   import PIDEdge from './PIDEdge.svelte';
   import EdgeMarkers from './EdgeMarkers.svelte';
@@ -139,13 +136,8 @@
             locked: element.locked,
             showLabel: element.showLabel !== false
           },
-<<<<<<< HEAD
           draggable: !creatingConnection && !nodesLocked && !element.locked,
           selectable: !nodesLocked && !creatingConnection,
-=======
-          draggable: !nodesLocked && !element.locked,
-          selectable: !nodesLocked,
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
           connectable: !nodesLocked,
           internals: {
             z: element.zIndex || 0
@@ -197,7 +189,6 @@
         id: `${conn.id}_v${edgeVersion}`, // Add version to force new instance
         source: conn.from.elementId,
         target: conn.to.elementId,
-<<<<<<< HEAD
         // Handle IDs now in simple format without suffixes
         // Handle both numeric (0-3) and string (left2, right2) point indices
         sourceHandle: typeof conn.from.pointIndex === 'string' 
@@ -206,11 +197,6 @@
         targetHandle: typeof conn.to.pointIndex === 'string'
           ? `handle-${conn.to.pointIndex}`
           : `handle-${Math.min(conn.to.pointIndex || 0, 3)}`,
-=======
-        // Ensure handle indices are within our fixed range (0-3)
-        sourceHandle: `handle-${Math.min(conn.from.pointIndex || 0, 3)}`,
-        targetHandle: `handle-${Math.min(conn.to.pointIndex || 0, 3)}`,
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
         type: 'custom', // USE CUSTOM EDGE TYPE
         animated: false,
         // Pass stroke width in data as well as style for redundancy
@@ -301,7 +287,18 @@
     }, 50);
   }
 
-<<<<<<< HEAD
+  // Log connection parameters for debugging
+  function logConnectionParams(params: any): any {
+    console.log('[InnerCanvas] Connection params:', {
+      nodeId: params?.nodeId,
+      handleId: params?.handleId,
+      handleType: params?.handleType,
+      position: params?.position,
+      timestamp: Date.now()
+    });
+    return params;
+  }
+
   // Validate connections using configuration
   function isValidConnection(connection: any) {
     console.log('[InnerCanvas] Validating connection:', connection);
@@ -325,29 +322,15 @@
     }
     
     return isValid;
-=======
-  // Validate connections
-  function isValidConnection(connection: any) {
-    // Prevent self-connections
-    if (connection.source === connection.target) {
-      return false;
-    }
-    return true;
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
-  }
   
   // Handle new connections
   const handleConnect: OnConnect = (connection) => {    
-<<<<<<< HEAD
     console.log('[InnerCanvas] handleConnect called:', connection);
     
     if (!connection.source || !connection.target) {
       console.log('[InnerCanvas] Missing source or target in connection');
       return;
     }
-=======
-    if (!connection.source || !connection.target) return;
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     
     // Prevent self-connections (double-check)
     if (connection.source === connection.target) {
@@ -355,12 +338,8 @@
       return;
     }
     
-<<<<<<< HEAD
     // Don't set creatingConnection here since it's already handled by onconnectstart
     // creatingConnection = true;
-=======
-    creatingConnection = true;
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     
     // Debug logging disabled - uncomment if needed
     // console.log('Connection params:', {
@@ -388,7 +367,6 @@
       actualTargetHandle = connection.sourceHandle;
     }
     
-<<<<<<< HEAD
     // Parse handle IDs using configuration
     const sourcePosition = parseHandleId(actualSourceHandle);
     const targetPosition = parseHandleId(actualTargetHandle);
@@ -408,32 +386,19 @@
       sourcePointIndex,
       targetPointIndex
     });
-=======
-    // Parse handle IDs - now they're in format "handle-0"
-    const sourceMatch = actualSourceHandle?.match(/handle-(\d+)/);
-    const targetMatch = actualTargetHandle?.match(/handle-(\d+)/);
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     
     const newConnection = {
       id: `connection_${Date.now()}`,
       from: {
         elementId: actualSource,
-<<<<<<< HEAD
         pointIndex: sourcePointIndex,
-=======
-        pointIndex: sourceMatch ? parseInt(sourceMatch[1]) : 0,
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
         type: 'bidirectional' as const,
         x: 0,
         y: 0
       },
       to: {
         elementId: actualTarget,
-<<<<<<< HEAD
         pointIndex: targetPointIndex,
-=======
-        pointIndex: targetMatch ? parseInt(targetMatch[1]) : 0,
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
         type: 'bidirectional' as const,
         x: 0,
         y: 0
@@ -446,25 +411,14 @@
       routing: 'direct' as any
     };
     
-<<<<<<< HEAD
     console.log('[InnerCanvas] Creating connection:', newConnection);
     diagram.addConnection(newConnection);
     console.log('[InnerCanvas] Connection added to diagram');
-=======
-    // console.log('Creating connection from', actualSource, 'to', actualTarget);
-    diagram.addConnection(newConnection);
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     
     // Reset connection start node
     connectionStartNode = null;
     
-<<<<<<< HEAD
     // Don't reset creatingConnection here - it's handled by onconnectend
-=======
-    setTimeout(() => {
-      creatingConnection = false;
-    }, 100);
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   };
 
   // Handle drop for new symbols
@@ -1009,7 +963,6 @@
     // Initialize updateNodeInternals hook
     updateNodeInternals = useUpdateNodeInternals();
     
-<<<<<<< HEAD
     // Listen for node internals update requests from symbols with multiple handles
     const handleNodeInternalsUpdate = (event: CustomEvent) => {
       if (updateNodeInternals && event.detail?.nodeId) {
@@ -1019,8 +972,6 @@
     };
     
     window.addEventListener('update-node-internals', handleNodeInternalsUpdate as EventListener);
-=======
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     window.addEventListener('toggle-connection-mode', handleConnectionModeToggle as EventListener);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('zoom-change', handleZoomChange as EventListener);
@@ -1078,10 +1029,7 @@
     }
     
     return () => {
-<<<<<<< HEAD
       window.removeEventListener('update-node-internals', handleNodeInternalsUpdate as EventListener);
-=======
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
       window.removeEventListener('toggle-connection-mode', handleConnectionModeToggle as EventListener);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('zoom-change', handleZoomChange as EventListener);
@@ -1110,7 +1058,6 @@
     onconnect={handleConnect}
     {isValidConnection}
     onconnectstart={(event, params) => {
-<<<<<<< HEAD
       console.log('[InnerCanvas] Connection start, setting creatingConnection = true');
       creatingConnection = true;
       // Store which node the connection started from
@@ -1118,25 +1065,9 @@
       
       // Force update nodes to apply draggable = false during connection
       nodes = nodes.map(n => ({ ...n, draggable: false }));
-=======
-      creatingConnection = true;
-      // Store which node the connection started from
-      connectionStartNode = params?.nodeId || null;
-      // console.log('Connection started from node:', connectionStartNode);
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
-      
-      // Dispatch event to notify all nodes about connection start
-      const connectionEvent = new CustomEvent('connection-start', {
-        detail: { 
-          nodeId: params?.nodeId,
-          handleId: params?.handleId,
-          handleType: params?.handleType
-        }
-      });
-      window.dispatchEvent(connectionEvent);
+      logConnectionParams(params);
     }}
     onconnectend={(event) => {
-<<<<<<< HEAD
       console.log('[InnerCanvas] Connection end event:', event);
       console.log('[InnerCanvas] Connection end, resetting creatingConnection');
       // Reset immediately without timeout to avoid stuck states
@@ -1145,24 +1076,11 @@
       // Clear connection start node
       connectionStartNode = null;
       
-      // Re-enable dragging for all nodes (unless locked)
-      nodes = nodes.map(n => ({ 
-        ...n, 
-        draggable: !nodesLocked && !$diagram.elements.find(el => el.id === n.id)?.locked 
-      }));
+      // Force update nodes to restore draggable state
+      nodes = [...nodes];
       
-=======
-      setTimeout(() => {
-        creatingConnection = false;
-        // Clear connection start node if connection was cancelled
-        if (!event?.evt?.shiftKey) { // If not completed with shift key
-          connectionStartNode = null;
-        }
-      }, 100);
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
-      // Dispatch event to notify all nodes about connection end
-      const connectionEvent = new CustomEvent('connection-end');
-      window.dispatchEvent(connectionEvent);
+      // Log the event for debugging
+      console.log('[InnerCanvas] Connection ended, draggable restored');
     }}
     onnodedrag={(event) => {
       // Don't update nodes during drag - let React Flow handle the dragging smoothly
@@ -1177,11 +1095,7 @@
     onnodeclick={handleNodeClick}
     onnodecontextmenu={handleNodeRightClick}
     onpaneclick={handlePaneClick}
-<<<<<<< HEAD
     connectOnClick={true}
-=======
-    connectOnClick={false}
->>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     connectionMode="loose"
     connectionLineType="step"
     connectionLineStyle="stroke: #000000; stroke-width: 0.37px;"
