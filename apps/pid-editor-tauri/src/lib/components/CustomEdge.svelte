@@ -1,0 +1,154 @@
+<script lang="ts">
+  import { BaseEdge, getSmoothStepPath } from '@xyflow/svelte';
+  import type { EdgeProps } from '@xyflow/svelte';
+  import { onMount } from 'svelte';
+
+  type $$Props = EdgeProps;
+
+  export let id: $$Props['id'];
+  export let sourceX: $$Props['sourceX'];
+  export let sourceY: $$Props['sourceY'];
+  export let targetX: $$Props['targetX'];
+  export let targetY: $$Props['targetY'];
+  export let sourcePosition: $$Props['sourcePosition'];
+  export let targetPosition: $$Props['targetPosition'];
+  export let style: $$Props['style'] = undefined;
+  export let markerEnd: $$Props['markerEnd'] = undefined;
+  export let markerStart: $$Props['markerStart'] = undefined;
+  export let data: $$Props['data'] = undefined;
+
+  // Get T-intersection depth from DOM for precise connection
+  function getTIntersectionDepth(nodeId, position) {
+    try {
+      const depthElement = document.getElementById(`t-depths-${nodeId}`);
+      if (!depthElement) return 12; // Fallback
+      
+      const positionMap = {
+        'top': 'data-t-depth-top',
+        'right': 'data-t-depth-right', 
+        'bottom': 'data-t-depth-bottom',
+        'left': 'data-t-depth-left'
+      };
+      
+      const depth = depthElement.getAttribute(positionMap[position]);
+      return parseFloat(depth) || 12;
+    } catch (error) {
+      return 12; // Fallback on error
+    }
+  }
+  
+  // Auto-calculate optimal offset based on T-intersection position
+  function calculateOptimalOffset(nodeData, nodeId, position) {
+    // First try to get exact T-intersection depth
+    if (nodeId && position) {
+      const tDepth = getTIntersectionDepth(nodeId, position);
+      // Add small buffer to ensure we reach the T-intersection
+      return Math.max(8, Math.min(tDepth + 2, 30));
+    }
+    
+    // Fallback to symbol-based calculation
+    let offset = 12;
+    
+    // Adjust based on symbol size (larger symbols need more offset)
+    if (nodeData?.width) {
+      const sizeRatio = nodeData.width / 60; // 60px is default size
+      offset = Math.round(12 * sizeRatio); // Scale offset proportionally
+    }
+    
+    // Adjust for stroke width (thicker strokes need more offset)
+    if (nodeData?.strokeWidth) {
+      offset += Math.round(nodeData.strokeWidth);
+    }
+    
+    // Ensure minimum and maximum bounds
+    return Math.max(8, Math.min(offset, 25)); // Between 8px and 25px
+  }
+  
+  // Get node data if available (would need to be passed from parent)
+  $: sourceNodeData = data?.sourceNodeData;
+  $: targetNodeData = data?.targetNodeData;
+  $: sourceNodeId = data?.sourceNodeId;
+  $: targetNodeId = data?.targetNodeId;
+  
+  // Calculate offset based on handle dimensions (8px square, no border)
+  // Half of handle size = 4px
+  $: offsetStart = 4; // 4px offset for 8px handle
+  $: offsetEnd = 4;   // 4px offset for 8px handle
+
+  // Calculate extended path with offsets using step path
+  $: extendedPath = (() => {
+    // Calculate direction vectors for each handle position
+    let extendedSourceX = sourceX;
+    let extendedSourceY = sourceY;
+    let extendedTargetX = targetX;
+    let extendedTargetY = targetY;
+    
+    // Extend INTO the source symbol based on source position
+    // Handles are at the edge, we need to move INWARD toward center
+    if (sourcePosition === 'top') {
+      extendedSourceY = sourceY + offsetStart; // Move DOWN into symbol
+    } else if (sourcePosition === 'right') {
+      extendedSourceX = sourceX - offsetStart; // Move LEFT into symbol
+    } else if (sourcePosition === 'bottom') {
+      extendedSourceY = sourceY - offsetStart; // Move UP into symbol
+    } else if (sourcePosition === 'left') {
+      extendedSourceX = sourceX + offsetStart; // Move RIGHT into symbol
+    }
+    
+    // Extend INTO the target symbol based on target position
+    // Handles are at the edge, we need to move INWARD toward center
+    if (targetPosition === 'top') {
+      extendedTargetY = targetY + offsetEnd; // Move DOWN into symbol
+    } else if (targetPosition === 'right') {
+      extendedTargetX = targetX - offsetEnd; // Move LEFT into symbol
+    } else if (targetPosition === 'bottom') {
+      extendedTargetY = targetY - offsetEnd; // Move UP into symbol
+    } else if (targetPosition === 'left') {
+      extendedTargetX = targetX + offsetEnd; // Move RIGHT into symbol
+    }
+    
+    return getSmoothStepPath({
+      sourceX: extendedSourceX,
+      sourceY: extendedSourceY,
+      targetX: extendedTargetX,
+      targetY: extendedTargetY,
+      sourcePosition,
+      targetPosition,
+      borderRadius: 0  // Sharp 90-degree corners
+    });
+  })();
+
+  $: [edgePath] = extendedPath;
+  
+  // Debug logging to compare with PIDEdge
+  let renderCount = 0;
+  onMount(() => {
+    console.log(`[CustomEdge ${id}] Mounted with positions:`, {
+      source: { x: sourceX, y: sourceY, position: sourcePosition },
+      target: { x: targetX, y: targetY, position: targetPosition },
+      offsets: { start: offsetStart, end: offsetEnd }
+    });
+  });
+  
+  $: if (renderCount < 3) {
+    renderCount++;
+    console.log(`[CustomEdge ${id}] Render #${renderCount}:`, {
+      raw: { sourceX, sourceY, targetX, targetY },
+      extended: { 
+        sourceX: extendedSourceX, 
+        sourceY: extendedSourceY,
+        targetX: extendedTargetX,
+        targetY: extendedTargetY
+      },
+      positions: { sourcePosition, targetPosition }
+    });
+  }
+</script>
+
+<BaseEdge 
+  {id}
+  path={edgePath}
+  {style}
+  {markerEnd}
+  {markerStart}
+/>

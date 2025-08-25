@@ -1,0 +1,107 @@
+Index,Filename,Description,Category
+0,pid_iso_equipment_000_tank_general_basin.svg,Tank - General Basin,Tank
+1,pid_iso_equipment_001_tank_floating_roof.svg,Tank - Floating Roof,Tank
+2,pid_iso_equipment_002_vessel_general_column.svg,Vessel - General Column,Vessel
+3,pid_iso_equipment_003_vessel_general.svg,Vessel - General,Vessel
+4,pid_iso_equipment_004_vessel_conical_head.svg,Vessel - Conical Head,Vessel
+5,pid_iso_equipment_005_vessel_dished_head.svg,Vessel - Dished Head,Vessel
+6,pid_iso_equipment_006_vessel_trays.svg,Vessel - Trays,Vessel
+7,pid_iso_equipment_007_vessel_spherical.svg,Vessel - Spherical,Vessel
+8,pid_iso_equipment_008_vessel_fixed_bed.svg,Vessel - Fixed Bed,Vessel
+9,pid_iso_equipment_009_vessel_fluidized_bed.svg,Vessel - Fluidized Bed,Vessel
+10,pid_iso_equipment_010_vessel_full_tube_coil.svg,Vessel - Full-Tube Coil,Vessel
+11,pid_iso_equipment_011_vessel_semi_tube_coil.svg,Vessel - Semi-Tube Coil,Vessel
+12,pid_iso_equipment_012_vessel_jacketed.svg,Vessel - Jacketed,Vessel
+13,pid_iso_equipment_013_storage_container.svg,Storage - Container,Storage
+14,pid_iso_equipment_014_storage_bag.svg,Storage - Bag,Storage
+15,pid_iso_equipment_015_storage_barrel_drum.svg,Storage - Barrel Drum,Storage
+16,pid_iso_equipment_016_storage_gas_cylinder.svg,Storage - Gas Cylinder,Storage
+17,pid_iso_equipment_017_furnace_industrial.svg,Furnace - Industrial,Furnace
+18,pid_iso_equipment_018_pump.svg,Pump,Other
+19,pid_iso_equipment_019_compressor.svg,Compressor,Other
+20,pid_iso_equipment_020_blower.svg,Blower,Other
+21,pid_iso_equipment_021_heat_exchanger_general_1.svg,Heat Exchanger - General 1,Heat Exchanger
+22,pid_iso_equipment_022_heat_exchanger_general_2.svg,Heat Exchanger - General 2,Heat Exchanger
+23,pid_iso_equipment_023_heat_exchanger_general_cooling_tower.svg,Heat Exchanger - General Cooling Tower,Heat Exchanger
+24,pid_iso_equipment_024_heat_exchanger_spiral.svg,Heat Exchanger - Spiral,Heat Exchanger
+25,pid_iso_equipment_025_heat_exchanger_double_pipe.svg,Heat Exchanger - Double Pipe,Heat Exchanger
+26,pid_iso_equipment_026_heat_exchanger_plate_type.svg,Heat Exchanger - Plate-Type,Heat Exchanger
+27,pid_iso_equipment_027_heat_exchanger_finned_tube.svg,Heat Exchanger - Finned-Tube,Heat Exchanger
+28,pid_iso_equipment_028_heat_exchanger_tube_bundle_u_tube.svg,Heat Exchanger - Tube-Bundle (U-Tube),Heat Exchanger
+29,pid_iso_equipment_029_heat_exchanger_shell_and_tube_bundle_u_tube.svg,Heat Exchanger - Shell and Tube Bundle (U-Tube),Heat Exchanger
+30,pid_iso_equipment_030_heat_exchanger_tube_bundle_floating_head.svg,Heat Exchanger - Tube Bundle (Floating Head),Heat Exchanger
+31,pid_iso_equipment_031_heat_exchanger_floating_head_tube_bundle.svg,Heat Exchanger - Floating Head Tube Bundle,Heat Exchanger
+32,pid_iso_equipment_032_heat_exchanger_shell_and_tube.svg,Heat Exchanger - Shell and Tube,Heat Exchanger
+33,pid_iso_equipment_033_heat_exchanger_spray_cooler.svg,Heat Exchanger - Spray Cooler,Heat Exchanger
+34,pid_iso_equipment_034_heat_exchanger_steam_boiler.svg,Heat Exchanger - Steam Boiler,Heat Exchanger
+35,pid_iso_equipment_035_heat_exchanger_film_evaporator.svg,Heat Exchanger - Film Evaporator,Heat Exchanger
+36,pid_iso_equipment_036_heat_exchanger_tube_coil.svg,Heat Exchanger - Tube Coil,Heat Exchanger
+37,pid_iso_equipment_037_heat_exchanger_heatingcooling.svg,Heat Exchanger - Heating/Cooling,Heat Exchanger
+38,pid_iso_equipment_038_heat_exchanger_burner_firing_system.svg,Heat Exchanger - Burner Firing System,Heat Exchanger
+39,pid_iso_equipment_039_driver.svg,Driver,Other
+40,pid_iso_equipment_040_agitator.svg,Agitator,Other
+41,pid_iso_equipment_041_mixer.svg,Mixer,Other
+42,pid_iso_equipment_042_filter_general.svg,Filter - General,Filter
+43,pid_iso_equipment_043_filter_liquid.svg,Filter - Liquid,Filter
+44,pid_iso_equipment_044_filter_suction.svg,Filter - Suction,Filter
+45,pid_iso_equipment_045_filter_activated_carbon.svg,Filter - Activated Carbon,Filter
+46,pid_iso_equipment_046_filter_belt_for_gases.svg,Filter - Belt for Gases,Filter
+47,pid_iso_equipment_047_filter_ion_exchange.svg,Filter - Ion Exchange,Filter
+48,pid_iso_equipment_048_filter_rotary_drum.svg,Filter - Rotary Drum,Filter
+49,pid_iso_equipment_049_filter_belt_fluids.svg,Filter - Belt Fluids,Filter
+50,pid_iso_equipment_050_filter_cartridge.svg,Filter - Cartridge,Filter
+51,pid_iso_equipment_051_filter_gases_cartridge.svg,Filter - Gases Cartridge,Filter
+52,pid_iso_equipment_052_filter_press.svg,Filter - Press,Filter
+53,pid_iso_equipment_053_filter_fixed_bed.svg,Filter - Fixed Bed,Filter
+54,pid_iso_equipment_054_filter_air.svg,Filter - Air,Filter
+55,pid_iso_equipment_055_filter_hepa.svg,Filter - HEPA,Filter
+56,pid_iso_equipment_056_filter_gases_packed_bed.svg,Filter - Gases Packed Bed,Filter
+57,pid_iso_equipment_057_separator.svg,Separator,Other
+58,pid_iso_equipment_058_centrifuge_general.svg,Centrifuge - General,Centrifuge
+59,pid_iso_equipment_059_centrifuge_perforated_shell.svg,Centrifuge - Perforated Shell,Centrifuge
+60,pid_iso_equipment_060_centrifuge_perforated_shell.svg,Centrifuge - Perforated Shell,Centrifuge
+61,pid_iso_equipment_061_centrifuge_pusher.svg,Centrifuge - Pusher,Centrifuge
+62,pid_iso_equipment_062_centrifuge_screw.svg,Centrifuge - Screw,Centrifuge
+63,pid_iso_equipment_063_centrifuge_screw_perforated_shell.svg,Centrifuge - Screw Perforated Shell,Centrifuge
+64,pid_iso_equipment_064_centrifuge_solid_shell.svg,Centrifuge - Solid Shell,Centrifuge
+65,pid_iso_equipment_065_centrifuge_disk.svg,Centrifuge - Disk,Centrifuge
+66,pid_iso_equipment_066_screening_device.svg,Screening Device,Other
+67,pid_iso_equipment_067_sifter_general.svg,Sifter - General,Sifter
+68,pid_iso_equipment_068_sorting_general.svg,Sorting - General,Sorting
+69,pid_iso_equipment_069_dryer_general.svg,Dryer - General,Dryer
+70,pid_iso_equipment_070_dryer_disk.svg,Dryer - Disk,Dryer
+71,pid_iso_equipment_071_dryer_fluidized_bed.svg,Dryer - Fluidized Bed,Dryer
+72,pid_iso_equipment_072_dryer_oven.svg,Dryer - Oven,Dryer
+73,pid_iso_equipment_073_dryer_roller_conveyor_belt.svg,Dryer - Roller Conveyor Belt,Dryer
+74,pid_iso_equipment_074_dryer_rotary_drum.svg,Dryer - Rotary Drum,Dryer
+75,pid_iso_equipment_075_dryer_spray.svg,Dryer - Spray,Dryer
+76,pid_iso_equipment_076_crusher.svg,Crusher,Other
+77,pid_iso_equipment_077_mill.svg,Mill,Other
+78,pid_iso_equipment_078_elevator_bucket.svg,Elevator - Bucket,Elevator
+79,pid_iso_equipment_079_conveyor_general.svg,Conveyor - General,Conveyor
+80,pid_iso_equipment_080_conveyor_belt.svg,Conveyor - Belt,Conveyor
+81,pid_iso_equipment_081_conveyor_chain.svg,Conveyor - Chain,Conveyor
+82,pid_iso_equipment_082_conveyor_screw.svg,Conveyor - Screw,Conveyor
+83,pid_iso_equipment_083_conveyor_vibrating.svg,Conveyor - Vibrating,Conveyor
+84,pid_iso_equipment_084_transport_ship.svg,Transport - Ship,Transport
+85,pid_iso_equipment_085_transport_tank_car.svg,Transport - Tank Car,Transport
+86,pid_iso_equipment_086_transport_box_truck.svg,Transport - Box Truck,Transport
+87,pid_iso_equipment_087_transport_industrial_truck.svg,Transport - Industrial Truck,Transport
+88,pid_iso_equipment_088_shaping_machine_pelletizing_disk.svg,Shaping Machine - Pelletizing Disk,Shaping Machine
+89,pid_iso_equipment_089_shaping_machine_piston_press.svg,Shaping Machine - Piston Press,Shaping Machine
+90,pid_iso_equipment_090_shaping_machine_roller_press.svg,Shaping Machine - Roller Press,Shaping Machine
+91,pid_iso_equipment_091_shaping_machine_screw_type_extruder.svg,Shaping Machine - Screw Type Extruder,Shaping Machine
+92,pid_iso_equipment_092_shaping_machine_general_coarsening.svg,Shaping Machine - General Coarsening,Shaping Machine
+93,pid_iso_equipment_093_shaping_machine_extruder.svg,Shaping Machine - Extruder,Shaping Machine
+94,pid_iso_equipment_094_solids_proportioner_general.svg,Solids Proportioner - General,Solids Proportioner
+95,pid_iso_equipment_095_distribution_device_rotary_table.svg,Distribution Device - Rotary Table,Distribution Device
+96,pid_iso_equipment_096_feeder_rotary_valve.svg,Feeder - Rotary Valve,Feeder
+97,pid_iso_equipment_097_distribution_device_fluid.svg,Distribution Device - Fluid,Distribution Device
+98,pid_iso_equipment_098_scale_belt.svg,Scale - Belt,Scale
+99,pid_iso_equipment_099_scale_general.svg,Scale - General,Scale
+100,pid_iso_equipment_100_scale_weighing_platform_floor.svg,Scale - Weighing Platform Floor,Scale
+101,pid_iso_equipment_101_misc_bulk_storage.svg,Misc - Bulk Storage,Misc
+102,pid_iso_equipment_102_misc_stack_chimney.svg,Misc - Stack Chimney,Misc
+103,pid_iso_equipment_103_misc_gas_flare.svg,Misc - Gas Flare,Misc
+104,pid_iso_equipment_104_misc_general_electrolysis_cell.svg,Misc - General Electrolysis Cell,Misc
+105,pid_iso_equipment_105_misc_general_hood.svg,Misc - General Hood,Misc

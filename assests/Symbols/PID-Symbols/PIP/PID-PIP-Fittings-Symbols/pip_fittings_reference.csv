@@ -1,0 +1,40 @@
+Index,Filename,Description,Category
+0,pid_pip_fittings_000_elbow_90_degree.svg,Elbow - 90 Degree,Elbow
+1,pid_pip_fittings_001_elbow_45_degree.svg,Elbow - 45 Degree,Elbow
+2,pid_pip_fittings_002_elbow_long_radius.svg,Elbow - Long Radius,Elbow
+3,pid_pip_fittings_003_elbow_reducing.svg,Elbow - Reducing,Elbow
+4,pid_pip_fittings_004_tee_equal.svg,Tee - Equal,Tee
+5,pid_pip_fittings_005_tee_reducing.svg,Tee - Reducing,Tee
+6,pid_pip_fittings_006_tee_barred.svg,Tee - Barred,Tee
+7,pid_pip_fittings_007_cross_equal.svg,Cross - Equal,Cross
+8,pid_pip_fittings_008_cross_reducing.svg,Cross - Reducing,Cross
+9,pid_pip_fittings_009_reducer_concentric.svg,Reducer - Concentric,Reducer
+10,pid_pip_fittings_010_reducer_eccentric.svg,Reducer - Eccentric,Reducer
+11,pid_pip_fittings_011_coupling_full.svg,Coupling - Full,Coupling
+12,pid_pip_fittings_012_coupling_half.svg,Coupling - Half,Coupling
+13,pid_pip_fittings_013_union_threaded.svg,Union - Threaded,Union
+14,pid_pip_fittings_014_union_socket_weld.svg,Union - Socket Weld,Union
+15,pid_pip_fittings_015_cap_pipe.svg,Cap - Pipe,Cap
+16,pid_pip_fittings_016_plug_pipe.svg,Plug - Pipe,Plug
+17,pid_pip_fittings_017_blind_flange.svg,Blind Flange,Flange
+18,pid_pip_fittings_018_spectacle_blind.svg,Spectacle Blind,Spectacle
+19,pid_pip_fittings_019_spacer_ring.svg,Spacer Ring,Spacer
+20,pid_pip_fittings_020_orifice_flange.svg,Orifice Flange,Flange
+21,pid_pip_fittings_021_flange_weld_neck.svg,Flange - Weld Neck,Flange
+22,pid_pip_fittings_022_flange_slip_on.svg,Flange - Slip On,Flange
+23,pid_pip_fittings_023_flange_socket_weld.svg,Flange - Socket Weld,Flange
+24,pid_pip_fittings_024_flange_threaded.svg,Flange - Threaded,Flange
+25,pid_pip_fittings_025_flange_lap_joint.svg,Flange - Lap Joint,Flange
+26,pid_pip_fittings_026_gasket_ring.svg,Gasket - Ring,Gasket
+27,pid_pip_fittings_027_gasket_full_face.svg,Gasket - Full Face,Gasket
+28,pid_pip_fittings_028_nipple_pipe.svg,Nipple - Pipe,Nipple
+29,pid_pip_fittings_029_swage_concentric.svg,Swage - Concentric,Swage
+30,pid_pip_fittings_030_swage_eccentric.svg,Swage - Eccentric,Swage
+31,pid_pip_fittings_031_y_branch.svg,Y-Branch,Y-Branch
+32,pid_pip_fittings_032_lateral_45_degree.svg,Lateral - 45 Degree,Lateral
+33,pid_pip_fittings_033_expansion_joint.svg,Expansion Joint,Expansion
+34,pid_pip_fittings_034_flexible_connector.svg,Flexible Connector,Flexible
+35,pid_pip_fittings_035_strainer_y_type.svg,Strainer - Y Type,Strainer
+36,pid_pip_fittings_036_strainer_t_type.svg,Strainer - T Type,Strainer
+37,pid_pip_fittings_037_steam_trap.svg,Steam Trap,Steam
+38,pid_pip_fittings_038_rupture_disk.svg,Rupture Disk,Rupture
