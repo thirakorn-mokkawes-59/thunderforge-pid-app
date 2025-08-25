@@ -450,3 +450,22 @@ export class ValidationUtils {
     return fileName.replace(/[^a-z0-9.-]/gi, '_').replace(/_{2,}/g, '_');
   }
 }
+
+/**
+ * Svelte action for click outside detection
+ */
+export function clickOutside(node: HTMLElement) {
+  const handleClick = (event: MouseEvent) => {
+    if (node && !node.contains(event.target as Node) && !event.defaultPrevented) {
+      node.dispatchEvent(new CustomEvent('clickOutside', { detail: event }));
+    }
+  };
+
+  document.addEventListener('click', handleClick, true);
+
+  return {
+    destroy() {
+      document.removeEventListener('click', handleClick, true);
+    }
+  };
+}
