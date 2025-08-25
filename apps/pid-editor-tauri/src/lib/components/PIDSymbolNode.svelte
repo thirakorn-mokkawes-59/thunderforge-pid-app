@@ -87,11 +87,37 @@
   let abortController: AbortController | null = null;
 
   // T-junction detection utility functions
+  interface TJunctionElement {
+    transform: string;
+    element: Element;
+  }
+
+  interface TJunctionSide {
+    h: TJunctionElement | null;
+    v: TJunctionElement | null;
+  }
+
+  interface TJunctions {
+    top: TJunctionSide;
+    right: TJunctionSide;
+    bottom: TJunctionSide;
+    left: TJunctionSide;
+  }
+
+  interface AdditionalJunction {
+    position: string;
+    h: TJunctionElement;
+    v?: TJunctionElement;
+    x?: number;
+    y?: number;
+  }
+
   interface TJunctionConfig {
     top?: { h: string; v: string };
     right?: { h: string; v: string };
     bottom?: { h: string; v: string };
     left?: { h: string; v: string };
+    mainGroupOffset?: { x: number; y: number };
     additionalJunctions?: Array<{
       position: string;
       h: string;
@@ -101,7 +127,7 @@
     }>;
   }
 
-  const TJUNCTION_CONFIGS: Record<string, TJunctionConfig & { mainGroupOffset?: { x: number; y: number } }> = {
+  const TJUNCTION_CONFIGS: Record<string, TJunctionConfig> = {
     'tank_floating_roof': {
       top: { h: 'translate(24 2) rotate(180 2 0)', v: 'translate(26 0) rotate(180 0 1)' },
       right: { h: 'translate(48 14) rotate(270 2 0)', v: 'translate(51 13) rotate(270 0 1)' },
@@ -153,12 +179,15 @@
     }
   };
 
-  function detectTJunctionsForSymbol(symbolKey: string, redElements: NodeListOf<Element>) {
+  function detectTJunctionsForSymbol(symbolKey: string, redElements: NodeListOf<Element>): { tJunctions: TJunctions; additionalJunctions: AdditionalJunction[] } {
     const config = TJUNCTION_CONFIGS[symbolKey];
-    if (!config) return { tJunctions: {}, additionalJunctions: [] };
+    if (!config) return { 
+      tJunctions: { top: { h: null, v: null }, right: { h: null, v: null }, bottom: { h: null, v: null }, left: { h: null, v: null } }, 
+      additionalJunctions: [] 
+    };
 
-    const tJunctions = { top: { h: null, v: null }, right: { h: null, v: null }, bottom: { h: null, v: null }, left: { h: null, v: null } };
-    const additionalJunctions = [];
+    const tJunctions: TJunctions = { top: { h: null, v: null }, right: { h: null, v: null }, bottom: { h: null, v: null }, left: { h: null, v: null } };
+    const additionalJunctions: AdditionalJunction[] = [];
 
     Array.from(redElements).forEach((el) => {
       if (el.tagName.toLowerCase() === 'path') {
@@ -168,13 +197,16 @@
 
           // Check main T-junctions
           Object.entries(config).forEach(([position, patterns]) => {
-            if (position === 'additionalJunctions') return;
+            if (position === 'additionalJunctions' || position === 'mainGroupOffset') return;
             
-            if (patterns.h && transform.includes(patterns.h)) {
-              tJunctions[position].h = { transform, element: el };
+            const pos = position as keyof TJunctions;
+            const patternConfig = patterns as { h: string; v: string };
+            
+            if (patternConfig.h && transform.includes(patternConfig.h)) {
+              tJunctions[pos].h = { transform, element: el };
             }
-            if (patterns.v && transform.includes(patterns.v)) {
-              tJunctions[position].v = { transform, element: el };
+            if (patternConfig.v && transform.includes(patternConfig.v)) {
+              tJunctions[pos].v = { transform, element: el };
             }
           });
 
@@ -330,7 +362,7 @@
         
         // Use refactored T-junction detection
         const symbolKey = getSymbolKeyFromPath(data.symbolPath);
-        const { tJunctions, additionalJunctions } = symbolKey 
+        let { tJunctions, additionalJunctions } = symbolKey 
           ? detectTJunctionsForSymbol(symbolKey, redElements)
           : { tJunctions: {top: { h: null, v: null }, right: { h: null, v: null }, bottom: { h: null, v: null }, left: { h: null, v: null }}, additionalJunctions: [] };
 
@@ -338,7 +370,7 @@
         
         // Fallback to manual detection for symbols not in config
         if (!symbolKey) {
-          // Keep existing manual detection logic for unconfigured symbols
+          additionalJunctions = [];
         }
         
         // First pass: find all horizontal and vertical lines for each T-junction
