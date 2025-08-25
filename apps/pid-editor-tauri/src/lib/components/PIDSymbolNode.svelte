@@ -85,6 +85,149 @@
   let activeTimeouts: Set<number> = new Set();
   let activeAnimationFrames: Set<number> = new Set();
   let abortController: AbortController | null = null;
+
+  // T-junction detection utility functions
+  interface TJunctionConfig {
+    top?: { h: string; v: string };
+    right?: { h: string; v: string };
+    bottom?: { h: string; v: string };
+    left?: { h: string; v: string };
+    additionalJunctions?: Array<{
+      position: string;
+      h: string;
+      v: string;
+      x?: number;
+      y?: number;
+    }>;
+  }
+
+  const TJUNCTION_CONFIGS: Record<string, TJunctionConfig & { mainGroupOffset?: { x: number; y: number } }> = {
+    'tank_floating_roof': {
+      top: { h: 'translate(24 2) rotate(180 2 0)', v: 'translate(26 0) rotate(180 0 1)' },
+      right: { h: 'translate(48 14) rotate(270 2 0)', v: 'translate(51 13) rotate(270 0 1)' },
+      bottom: { h: 'translate(24 28)', v: 'translate(26 28)' },
+      left: { h: 'translate(0 14) rotate(90 2 0)', v: 'translate(1 13) rotate(90 0 1)' },
+      mainGroupOffset: { x: 6.5, y: 18.5 }
+    },
+    'vessel_general': {
+      top: { h: 'translate(11 2) rotate(180 2 0)', v: 'translate(13 0) rotate(180 0 1)' },
+      right: { h: 'translate(22 11) rotate(270 2 0)', v: 'translate(25 10) rotate(270 0 1)' },
+      bottom: { h: 'translate(11 22)', v: 'translate(13 22)' },
+      left: { h: 'translate(0 11) rotate(90 2 0)', v: 'translate(1 10) rotate(90 0 1)' },
+      mainGroupOffset: { x: 19.5, y: 8.5 }
+    },
+    'heat_exchanger_general_1': {
+      top: { h: 'translate(20 2) rotate(180)', v: 'translate(22 0) rotate(180)' },
+      right: { h: 'translate(40.304 10) rotate(270)', v: 'translate(42.702 9.202) rotate(270)' },
+      bottom: { h: 'translate(20 42)', v: 'translate(22 42)' },
+      left: { h: 'translate(0 22) rotate(90)', v: 'translate(1 21) rotate(90)' },
+      mainGroupOffset: { x: 10.5, y: 10.5 },
+      additionalJunctions: [{
+        position: 'right2',
+        h: 'translate(40.304 34) rotate(270)',
+        v: 'translate(42.702 33.202) rotate(270)',
+        x: 40.304,
+        y: 34
+      }]
+    },
+    'vessel_full_tube_coil': {
+      top: { h: 'translate(11 2) rotate(180 2 0)', v: 'translate(13 0) rotate(180 0 1)' },
+      right: { h: 'translate(22 11) rotate(270 2 0)', v: 'translate(25 10) rotate(270 0 1)' },
+      bottom: { h: 'translate(11 22)', v: 'translate(13 22)' },
+      left: { h: 'translate(0 11) rotate(90 2 0)', v: 'translate(1 10) rotate(90 0 1)' },
+      mainGroupOffset: { x: 19.5, y: 8.5 },
+      additionalJunctions: [
+        { position: 'right2', h: 'translate(22 17) rotate(270 2 0)', v: 'translate(25 16) rotate(270 0 1)', x: 22, y: 17 },
+        { position: 'left2', h: 'translate(0 17) rotate(90 2 0)', v: 'translate(1 16) rotate(90 0 1)', x: 0, y: 17 }
+      ]
+    },
+    'vessel_semi_tube_coil': {
+      top: { h: 'translate(11 2) rotate(180 2 0)', v: 'translate(13 0) rotate(180 0 1)' },
+      right: { h: 'translate(22 11) rotate(270 2 0)', v: 'translate(25 10) rotate(270 0 1)' },
+      bottom: { h: 'translate(11 22)', v: 'translate(13 22)' },
+      left: { h: 'translate(0 11) rotate(90 2 0)', v: 'translate(1 10) rotate(90 0 1)' },
+      mainGroupOffset: { x: 19.5, y: 8.5 },
+      additionalJunctions: [
+        { position: 'right2', h: 'translate(22 17) rotate(270 2 0)', v: 'translate(25 16) rotate(270 0 1)', x: 22, y: 17 }
+      ]
+    }
+  };
+
+  function detectTJunctionsForSymbol(symbolKey: string, redElements: NodeListOf<Element>) {
+    const config = TJUNCTION_CONFIGS[symbolKey];
+    if (!config) return { tJunctions: {}, additionalJunctions: [] };
+
+    const tJunctions = { top: { h: null, v: null }, right: { h: null, v: null }, bottom: { h: null, v: null }, left: { h: null, v: null } };
+    const additionalJunctions = [];
+
+    Array.from(redElements).forEach((el) => {
+      if (el.tagName.toLowerCase() === 'path') {
+        const parentGroup = el.parentElement;
+        if (parentGroup) {
+          const transform = parentGroup.getAttribute('transform') || '';
+
+          // Check main T-junctions
+          Object.entries(config).forEach(([position, patterns]) => {
+            if (position === 'additionalJunctions') return;
+            
+            if (patterns.h && transform.includes(patterns.h)) {
+              tJunctions[position].h = { transform, element: el };
+            }
+            if (patterns.v && transform.includes(patterns.v)) {
+              tJunctions[position].v = { transform, element: el };
+            }
+          });
+
+          // Check additional junctions
+          if (config.additionalJunctions) {
+            config.additionalJunctions.forEach(junction => {
+              if (transform.includes(junction.h)) {
+                const existingJunction = additionalJunctions.find(j => j.position === junction.position);
+                if (!existingJunction) {
+                  additionalJunctions.push({
+                    position: junction.position,
+                    h: { transform, element: el },
+                    x: junction.x,
+                    y: junction.y
+                  });
+                } else {
+                  existingJunction.h = { transform, element: el };
+                }
+              }
+              if (transform.includes(junction.v)) {
+                const existingJunction = additionalJunctions.find(j => j.position === junction.position);
+                if (existingJunction) {
+                  existingJunction.v = { transform, element: el };
+                }
+              }
+            });
+          }
+        }
+      }
+    });
+
+    return { tJunctions, additionalJunctions };
+  }
+
+  function getSymbolKeyFromPath(symbolPath: string): string | null {
+    if (!symbolPath) return null;
+    
+    const symbolKeys = [
+      'tank_floating_roof',
+      'vessel_general',
+      'heat_exchanger_general_1',
+      'vessel_full_tube_coil', 
+      'vessel_semi_tube_coil'
+    ];
+
+    for (const key of symbolKeys) {
+      if (symbolPath.includes(key)) {
+        return key;
+      }
+    }
+    
+    return null;
+  }
   
   // Load SVG and parse connection points - only on path change
   $: if (data.symbolPath && !svgContent) {
@@ -174,23 +317,29 @@
         const isStorageContainer = data.symbolPath?.includes('storage_container');
         const isStorageBag = data.symbolPath?.includes('storage_bag');
         const isStorageBarrelDrum = data.symbolPath?.includes('storage_barrel_drum');
+        const isStorageGasCylinder = data.symbolPath?.includes('storage_gas_cylinder');
+        const isFurnaceIndustrial = data.symbolPath?.includes('furnace_industrial');
         const isTankGeneralBasin = data.symbolPath?.includes('tank_general_basin');
         const isPump = data.symbolPath?.includes('pump');
         const isCompressor = data.symbolPath?.includes('compressor');
+        const isBlower = data.symbolPath?.includes('blower');
         const isValve = data.symbolPath?.includes('valves');
         const isInstrument = data.symbolPath?.includes('instruments');
         const isHeatExchanger = data.symbolPath?.includes('heat_exchanger');
+        const isHeatExchangerGeneral1 = data.symbolPath?.includes('heat_exchanger_general_1');
         
-        // Find all 4 T-junctions based on symbol type
-        const tJunctions = {
-          top: { h: null, v: null },
-          right: { h: null, v: null },
-          bottom: { h: null, v: null },
-          left: { h: null, v: null }
-        };
+        // Use refactored T-junction detection
+        const symbolKey = getSymbolKeyFromPath(data.symbolPath);
+        const { tJunctions, additionalJunctions } = symbolKey 
+          ? detectTJunctionsForSymbol(symbolKey, redElements)
+          : { tJunctions: {top: { h: null, v: null }, right: { h: null, v: null }, bottom: { h: null, v: null }, left: { h: null, v: null }}, additionalJunctions: [] };
+
+        console.log(`[PIDSymbolNode ${id}] Using refactored detection for symbol: ${symbolKey || 'unknown'}`);
         
-        // For vessels with multiple connection points on same side
-        let additionalJunctions = [];
+        // Fallback to manual detection for symbols not in config
+        if (!symbolKey) {
+          // Keep existing manual detection logic for unconfigured symbols
+        }
         
         // First pass: find all horizontal and vertical lines for each T-junction
         Array.from(redElements).forEach((el, index) => {
@@ -538,7 +687,7 @@
                 }
                 
               } else if (isVesselSemiTubeCoil) {
-                // Vessel Semi Tube Coil - also has 2 T-junctions on each side
+                // Vessel Semi Tube Coil - similar to full tube coil, has 2 T-junctions on each side
                 // TOP T-junction
                 if (transform.includes('translate(16 1.979)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
@@ -555,7 +704,7 @@
                   tJunctions.bottom.v = { transform, element: el };
                 }
                 
-                // Handle multiple T-junctions on sides
+                // Handle multiple T-junctions on sides (following full tube coil pattern)
                 // RIGHT - First junction (upper)
                 if (transform.includes('translate(32 9)') && transform.includes('rotate(270')) {
                   tJunctions.right.h = { transform, element: el };
@@ -609,75 +758,37 @@
                 }
                 
               } else if (isVesselJacketed) {
-                // Vessel Jacketed - may have different patterns
+                // Vessel Jacketed - has a jacket around the vessel with 4 T-junctions
                 // TOP T-junction
-                if (transform.includes('translate(20.023 2)') && transform.includes('rotate(180')) {
+                if (transform.includes('translate(12 2)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
                 }
-                if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
+                if (transform.includes('translate(14 0)') && transform.includes('rotate(180')) {
                   tJunctions.top.v = { transform, element: el };
                 }
                 
-                // RIGHT T-junctions - Store both positions for vessel full tube coil
-                if (transform.includes('translate(40.023 9)') && transform.includes('rotate(270')) {
-                  // First right junction (top coil)
-                  if (!tJunctions.right.h) {
-                    tJunctions.right.h = { transform, element: el };
-                  }
+                // BOTTOM T-junction
+                if (transform.includes('translate(12 44)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
                 }
-                if (transform.includes('translate(43.011 8.011)') && transform.includes('rotate(270')) {
-                  if (!tJunctions.right.v) {
-                    tJunctions.right.v = { transform, element: el };
-                  }
-                }
-                if (transform.includes('translate(40.023 31)') && transform.includes('rotate(270')) {
-                  // Second right junction (bottom coil) - store in array for later processing
-                  if (!additionalJunctions) additionalJunctions = [];
-                  additionalJunctions.push({
-                    position: 'right2',
-                    h: { transform, element: el },
-                    x: 40.023,
-                    y: 31
-                  });
-                }
-                if (transform.includes('translate(43.011 30.011)') && transform.includes('rotate(270')) {
-                  if (additionalJunctions && additionalJunctions.length > 0) {
-                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
-                    if (lastJunction.position === 'right2') {
-                      lastJunction.v = { transform, element: el };
-                    }
-                  }
+                if (transform.includes('translate(14 44)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
                 }
                 
-                // LEFT T-junctions - Store both positions for vessel full tube coil
-                if (transform.includes('translate(-0.023 17)') && transform.includes('rotate(90')) {
-                  // First left junction (top coil)
-                  if (!tJunctions.left.h) {
-                    tJunctions.left.h = { transform, element: el };
-                  }
+                // RIGHT T-junction
+                if (transform.includes('translate(24 23)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
                 }
-                if (transform.includes('translate(0.989 16.011)') && transform.includes('rotate(90')) {
-                  if (!tJunctions.left.v) {
-                    tJunctions.left.v = { transform, element: el };
-                  }
+                if (transform.includes('translate(27 22)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
                 }
-                if (transform.includes('translate(-0.023 40)') && transform.includes('rotate(90')) {
-                  // Second left junction (bottom coil) - store in array for later processing
-                  if (!additionalJunctions) additionalJunctions = [];
-                  additionalJunctions.push({
-                    position: 'left2',
-                    h: { transform, element: el },
-                    x: -0.023,
-                    y: 40
-                  });
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 23)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
                 }
-                if (transform.includes('translate(0.989 39.011)') && transform.includes('rotate(90')) {
-                  if (additionalJunctions && additionalJunctions.length > 0) {
-                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
-                    if (lastJunction.position === 'left2') {
-                      lastJunction.v = { transform, element: el };
-                    }
-                  }
+                if (transform.includes('translate(1 22)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
                 }
                 
               } else if (isStorageContainer) {
@@ -714,8 +825,42 @@
                   tJunctions.left.v = { transform, element: el };
                 }
                 
-              } else if (isStorageBarrelDrum || isStorageBag) {
-                // Storage Barrel/Drum and Bag specific patterns (cylindrical)
+              } else if (isStorageBag) {
+                // Storage Bag specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(10 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(12 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(10 36)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(12 36)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(20 19)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(23 18)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 19)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 18)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isStorageBarrelDrum) {
+                // Storage Barrel/Drum specific patterns
                 // TOP T-junction
                 if (transform.includes('translate(10 2)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
@@ -745,6 +890,74 @@
                   tJunctions.left.h = { transform, element: el };
                 }
                 if (transform.includes('translate(2 17)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isStorageGasCylinder) {
+                // Storage Gas Cylinder specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(6 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(8 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(6 35)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(8 35)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(12 19)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(15 18)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 19)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 18)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isFurnaceIndustrial) {
+                // Furnace Industrial specific patterns
+                // TOP T-junction
+                if (transform.includes('translate(12 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(14 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(12 42)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(14 42)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // RIGHT T-junction
+                if (transform.includes('translate(24 22)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                }
+                if (transform.includes('translate(27 21)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 22)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 21)') && transform.includes('rotate(90')) {
                   tJunctions.left.v = { transform, element: el };
                 }
                 
@@ -782,8 +995,8 @@
                   tJunctions.bottom.v = { transform, element: el };
                 }
                 
-              } else if (isPump || isCompressor) {
-                // Pump and Compressor specific patterns (circular symbols)
+              } else if (isPump || isCompressor || isBlower) {
+                // Pump, Compressor and Blower specific patterns (circular symbols)
                 // TOP T-junction
                 if (transform.includes('translate(20 2)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
@@ -814,6 +1027,61 @@
                 }
                 if (transform.includes('translate(1 21)') && transform.includes('rotate(90')) {
                   tJunctions.left.v = { transform, element: el };
+                }
+                
+              } else if (isHeatExchangerGeneral1) {
+                // Heat Exchanger General 1 - has 2 T-junctions on right side
+                // TOP T-junction
+                if (transform.includes('translate(20 2)') && transform.includes('rotate(180')) {
+                  tJunctions.top.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 0)') && transform.includes('rotate(180')) {
+                  tJunctions.top.v = { transform, element: el };
+                }
+                
+                // BOTTOM T-junction
+                if (transform.includes('translate(20 42)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.h = { transform, element: el };
+                }
+                if (transform.includes('translate(22 42)') && !transform.includes('rotate')) {
+                  tJunctions.bottom.v = { transform, element: el };
+                }
+                
+                // LEFT T-junction
+                if (transform.includes('translate(0 22)') && transform.includes('rotate(90')) {
+                  tJunctions.left.h = { transform, element: el };
+                }
+                if (transform.includes('translate(1 21)') && transform.includes('rotate(90')) {
+                  tJunctions.left.v = { transform, element: el };
+                }
+                
+                // RIGHT - First junction (upper)
+                if (transform.includes('translate(40.304 10)') && transform.includes('rotate(270')) {
+                  tJunctions.right.h = { transform, element: el };
+                  console.log(`[Heat Exchanger General1] Found upper right H junction at Y=10`);
+                }
+                if (transform.includes('translate(42.702 9.202)') && transform.includes('rotate(270')) {
+                  tJunctions.right.v = { transform, element: el };
+                  console.log(`[Heat Exchanger General1] Found upper right V junction`);
+                }
+                // RIGHT - Second junction (lower)
+                if (transform.includes('translate(40.304 34)') && transform.includes('rotate(270')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'right2',
+                    h: { transform, element: el },
+                    x: 40.304,
+                    y: 34
+                  });
+                  console.log(`[Heat Exchanger General1] Found lower right H junction at Y=34`);
+                }
+                if (transform.includes('translate(42.702 33.202)') && transform.includes('rotate(270')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'right2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
                 }
                 
               } else if (isValve) {
@@ -891,7 +1159,13 @@
         let mainGroupOffsetX = 0;
         let mainGroupOffsetY = 0;
         
-        if (isTankFloatingRoof) {
+        // Use config-based offsets if available, otherwise fallback to manual
+        const config = symbolKey ? TJUNCTION_CONFIGS[symbolKey] : null;
+        if (config && config.mainGroupOffset) {
+          mainGroupOffsetX = config.mainGroupOffset.x;
+          mainGroupOffsetY = config.mainGroupOffset.y;
+          console.log(`[PIDSymbolNode ${id}] Using config offset: ${mainGroupOffsetX}, ${mainGroupOffsetY}`);
+        } else if (isTankFloatingRoof) {
           mainGroupOffsetX = 6.5;
           mainGroupOffsetY = 18.5;
         } else if (isVesselGeneral) {
@@ -912,19 +1186,34 @@
         } else if (isVesselSpherical) {
           mainGroupOffsetX = 10.5;
           mainGroupOffsetY = 8.5;
-        } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
+        } else if (isVesselFullTubeCoil) {
           mainGroupOffsetX = 10.5;
           mainGroupOffsetY = 8.5;
+        } else if (isVesselSemiTubeCoil) {
+          mainGroupOffsetX = 14.5;  // Different offset for semi tube coil
+          mainGroupOffsetY = 8.5;
+        } else if (isVesselJacketed) {
+          mainGroupOffsetX = 18.5;  // Different offset for jacketed
+          mainGroupOffsetY = 9.5;
         } else if (isStorageContainer) {
           mainGroupOffsetX = 8.5;
           mainGroupOffsetY = 21.5;
-        } else if (isStorageBarrelDrum || isStorageBag) {
+        } else if (isStorageBag) {
+          mainGroupOffsetX = 20.5;
+          mainGroupOffsetY = 13.5;  // Different Y offset for bag
+        } else if (isStorageBarrelDrum) {
           mainGroupOffsetX = 20.5;
           mainGroupOffsetY = 14.5;
+        } else if (isStorageGasCylinder) {
+          mainGroupOffsetX = 24.5;
+          mainGroupOffsetY = 13.5;
+        } else if (isFurnaceIndustrial) {
+          mainGroupOffsetX = 18.5;
+          mainGroupOffsetY = 10.5;
         } else if (isTankGeneralBasin) {
           mainGroupOffsetX = 7.5;
           mainGroupOffsetY = 13.5;
-        } else if (isPump || isCompressor) {
+        } else if (isPump || isCompressor || isBlower) {
           mainGroupOffsetX = 10.5;
           mainGroupOffsetY = 10.5;
         } else if (isValve) {
@@ -933,6 +1222,9 @@
         } else if (isInstrument) {
           mainGroupOffsetX = 10;
           mainGroupOffsetY = 10;
+        } else if (isHeatExchangerGeneral1) {
+          mainGroupOffsetX = 10.5;
+          mainGroupOffsetY = 10.5;
         } else if (isHeatExchanger) {
           mainGroupOffsetX = 5;
           mainGroupOffsetY = 5;
@@ -1065,8 +1357,6 @@
                   intersectionX = vX; // Use vertical line X (22)
                   intersectionY = hY; // Use horizontal line Y (43.822)
                 }
-              } else if (isVesselFullTubeCoil) {
-                // Vessel Full Tube Coil has 6 specific connection points
               } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
                 if (position === 'top') {
                   intersectionX = vX; // Use vertical line X (22)
@@ -1113,6 +1403,34 @@
                   intersectionX = vX; // Use vertical line X (22)
                   intersectionY = hY; // Use horizontal line Y (46)
                 }
+              } else if (isVesselJacketed) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (14)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T at x=0
+                  intersectionY = hY; // Use horizontal line Y (23)
+                } else if (position === 'right') {
+                  intersectionX = hX + 2; // Center of right T at x=24
+                  intersectionY = hY; // Use horizontal line Y (23)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (14)
+                  intersectionY = hY; // Use horizontal line Y (44)
+                }
+              } else if (isVesselSemiTubeCoil) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (18)
+                  intersectionY = hY; // Use horizontal line Y (1.979)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T at x=0, add 2 for center
+                  intersectionY = hY; // Use horizontal line Y (17 or 39)
+                } else if (position === 'right') {
+                  intersectionX = hX + 2; // Center of right T at x=32, add 2 for center
+                  intersectionY = hY; // Use horizontal line Y (9 or 31)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (18)
+                  intersectionY = hY; // Use horizontal line Y (46.021)
+                }
               } else if (isStorageContainer) {
                 if (position === 'top') {
                   intersectionX = vX; // Use vertical line X (24)
@@ -1127,7 +1445,21 @@
                   intersectionX = vX; // Use vertical line X (24)
                   intersectionY = hY; // Use horizontal line Y (22)
                 }
-              } else if (isStorageBarrelDrum || isStorageBag) {
+              } else if (isStorageBag) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (12)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T at x=0
+                  intersectionY = hY; // Use horizontal line Y (19)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T at x=20
+                  intersectionY = hY; // Use horizontal line Y (19)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (12)
+                  intersectionY = hY; // Use horizontal line Y (36)
+                }
+              } else if (isStorageBarrelDrum) {
                 if (position === 'top') {
                   intersectionX = vX; // Use vertical line X (12)
                   intersectionY = hY; // Use horizontal line Y (2)
@@ -1140,6 +1472,34 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (12)
                   intersectionY = hY; // Use horizontal line Y (35)
+                }
+              } else if (isStorageGasCylinder) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (8)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 1; // Center of left T at x=0
+                  intersectionY = hY; // Use horizontal line Y (19)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T at x=12
+                  intersectionY = hY; // Use horizontal line Y (19)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (8)
+                  intersectionY = hY; // Use horizontal line Y (35)
+                }
+              } else if (isFurnaceIndustrial) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (14)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T at x=0
+                  intersectionY = hY; // Use horizontal line Y (22)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T at x=24
+                  intersectionY = hY; // Use horizontal line Y (22)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (14)
+                  intersectionY = hY; // Use horizontal line Y (42)
                 }
               } else if (isTankGeneralBasin) {
                 if (position === 'top') {
@@ -1155,7 +1515,7 @@
                   intersectionX = vX; // Use vertical line X (25)
                   intersectionY = hY; // Use horizontal line Y (36)
                 }
-              } else if (isPump || isCompressor) {
+              } else if (isPump || isCompressor || isBlower) {
                 if (position === 'top') {
                   intersectionX = vX; // Use vertical line X (22)
                   intersectionY = hY; // Use horizontal line Y (2)
@@ -1200,6 +1560,20 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X (22.5)
                   intersectionY = hY; // Use horizontal line Y (42.5)
+                }
+              } else if (isHeatExchangerGeneral1) {
+                if (position === 'top') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (2)
+                } else if (position === 'left') {
+                  intersectionX = hX + 2; // Center of left T at x=0
+                  intersectionY = hY; // Use horizontal line Y (22)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.6; // Center of right T at x=40.304
+                  intersectionY = hY; // Use horizontal line Y (10)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (42)
                 }
               } else if (isHeatExchanger) {
                 // Heat exchangers have variable sizes, use relative positioning
@@ -1301,14 +1675,24 @@
               const vMatch = vTransform.match(/translate\(([^)]+)\)/);
               
               if (hMatch && vMatch) {
-                const [hX, hY] = hMatch[1].split(/[\s,]+/).map(parseFloat);
+                // Use stored x,y values if available (for accurate positioning)
+                const [parsedHX, parsedHY] = hMatch[1].split(/[\s,]+/).map(parseFloat);
                 const [vX, vY] = vMatch[1].split(/[\s,]+/).map(parseFloat);
+                const hX = addJunction.x || parsedHX;
+                const hY = addJunction.y || parsedHY;
                 
                 let intersectionX, intersectionY;
                 
                 if (addJunction.position === 'right2') {
-                  intersectionX = hX + 1.5; // Center of right T
-                  intersectionY = hY; // Use horizontal line Y (31)
+                  if (isHeatExchangerGeneral1) {
+                    // Heat exchanger general1 has specific right junction positions
+                    console.log(`[Heat Exchanger General1] right2 junction - hX: ${hX}, hY: ${hY}, stored Y: ${addJunction.y}`);
+                    intersectionX = hX + 1.6; // Center of lower right T at x=40.304
+                    intersectionY = hY; // Use horizontal line Y (34)
+                  } else {
+                    intersectionX = hX + 1.5; // Center of right T
+                    intersectionY = hY; // Use horizontal line Y (31)
+                  }
                 } else if (addJunction.position === 'left2') {
                   intersectionX = hX + 1; // Center of left T
                   intersectionY = hY; // Use horizontal line Y (40)
@@ -1322,12 +1706,20 @@
                 const scaledX = absoluteX * scaleX;
                 const scaledY = absoluteY * scaleY;
                 
+                const handleId = `handle-${junctionPoints.length}`;
                 junctionPoints.push({
                   x: scaledX,
                   y: scaledY,
-                  id: `handle-${junctionPoints.length}`,
+                  id: handleId,
                   position: addJunction.position.includes('right') ? Position.Right : Position.Left,
                   edgeDistance: 4
+                });
+                
+                console.log(`[PIDSymbolNode ${id}] Additional ${addJunction.position} handle at:`, {
+                  handleId,
+                  scaledX: scaledX.toFixed(2),
+                  scaledY: scaledY.toFixed(2),
+                  position: addJunction.position
                 });
               }
             }
@@ -1356,7 +1748,6 @@
             }, 100);
             activeTimeouts.add(timeoutId);
           }
-          console.log(`Using ${junctionPoints.length} T-junctions for ${id}`);
         } else {
           console.log('No T-junctions found, using fallback');
           connectionPoints = []; // Will trigger fallback handles
