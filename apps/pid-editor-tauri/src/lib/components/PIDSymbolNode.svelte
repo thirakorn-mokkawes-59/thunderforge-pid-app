@@ -6,7 +6,10 @@
   import { UI_CONSTANTS } from '$lib/constants/ui';
   import { writable } from 'svelte/store';
   import { handleVisibility } from '$lib/stores/handleVisibility';
+<<<<<<< HEAD
   import { HANDLE_CONFIG, generateHandleId } from '$lib/config/handleConfig';
+=======
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   
   type $$Props = NodeProps;
   
@@ -440,9 +443,13 @@
                 }
                 
               } else if (isVesselFullTubeCoil) {
+<<<<<<< HEAD
                 // Vessel Full Tube Coil - has 6 T-junctions total
                 // Store all 6 junctions directly without using additionalJunctions
                 
+=======
+                // Vessel Full Tube Coil - has 2 T-junctions on each side
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
                 // TOP T-junction
                 if (transform.includes('translate(20.023 2)') && transform.includes('rotate(180')) {
                   tJunctions.top.h = { transform, element: el };
@@ -459,21 +466,50 @@
                   tJunctions.bottom.v = { transform, element: el };
                 }
                 
+<<<<<<< HEAD
                 // RIGHT - First junction (upper at Y=9)
+=======
+                // Handle multiple T-junctions on sides
+                // RIGHT - First junction (upper)
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
                 if (transform.includes('translate(40.023 9)') && transform.includes('rotate(270')) {
                   tJunctions.right.h = { transform, element: el };
                 }
                 if (transform.includes('translate(43.011 8.011)') && transform.includes('rotate(270')) {
                   tJunctions.right.v = { transform, element: el };
                 }
+<<<<<<< HEAD
                 
                 // LEFT - First junction (upper at Y=17)
+=======
+                // RIGHT - Second junction (lower)
+                if (transform.includes('translate(40.023 31)') && transform.includes('rotate(270')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'right2',
+                    h: { transform, element: el },
+                    x: 40.023,
+                    y: 31
+                  });
+                }
+                if (transform.includes('translate(43.011 30.011)') && transform.includes('rotate(270')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'right2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+                }
+                
+                // LEFT - First junction (upper)
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
                 if (transform.includes('translate(-0.023 17)') && transform.includes('rotate(90')) {
                   tJunctions.left.h = { transform, element: el };
                 }
                 if (transform.includes('translate(0.989 16.011)') && transform.includes('rotate(90')) {
                   tJunctions.left.v = { transform, element: el };
                 }
+<<<<<<< HEAD
                 
                 // Store second junctions in a special tJunctions2 object for stable processing
                 if (!tJunctions.right2) tJunctions.right2 = { h: null, v: null };
@@ -493,6 +529,25 @@
                 }
                 if (transform.includes('translate(0.989 39.011)') && transform.includes('rotate(90')) {
                   tJunctions.left2.v = { transform, element: el };
+=======
+                // LEFT - Second junction (lower)
+                if (transform.includes('translate(-0.023 40)') && transform.includes('rotate(90')) {
+                  if (!additionalJunctions) additionalJunctions = [];
+                  additionalJunctions.push({
+                    position: 'left2',
+                    h: { transform, element: el },
+                    x: -0.023,
+                    y: 40
+                  });
+                }
+                if (transform.includes('translate(0.989 39.011)') && transform.includes('rotate(90')) {
+                  if (additionalJunctions && additionalJunctions.length > 0) {
+                    const lastJunction = additionalJunctions[additionalJunctions.length - 1];
+                    if (lastJunction.position === 'left2') {
+                      lastJunction.v = { transform, element: el };
+                    }
+                  }
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
                 }
                 
               } else if (isVesselSemiTubeCoil) {
@@ -897,6 +952,7 @@
         }
         
         // Process each T-junction in the correct order (top, right, bottom, left)
+<<<<<<< HEAD
         // For vessel full tube coil, also process right2 and left2
         const orderedPositions = isVesselFullTubeCoil 
           ? ['top', 'right', 'bottom', 'left', 'right2', 'left2']
@@ -905,6 +961,12 @@
         orderedPositions.forEach(position => {
           const junction = tJunctions[position];
           if (junction && junction.h && junction.v) {
+=======
+        const orderedPositions = ['top', 'right', 'bottom', 'left'];
+        orderedPositions.forEach(position => {
+          const junction = tJunctions[position];
+          if (junction.h && junction.v) {
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
             console.log(`Processing ${position} T-junction`);
             
             // Extract coordinates
@@ -1019,12 +1081,17 @@
                   intersectionX = vX; // Use vertical line X (22)
                   intersectionY = hY; // Use horizontal line Y (43.822)
                 }
+<<<<<<< HEAD
               } else if (isVesselFullTubeCoil) {
                 // Vessel Full Tube Coil has 6 specific connection points
+=======
+              } else if (isVesselFullTubeCoil || isVesselSemiTubeCoil || isVesselJacketed) {
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
                 if (position === 'top') {
                   intersectionX = vX; // Use vertical line X (22)
                   intersectionY = hY; // Use horizontal line Y (2)
                 } else if (position === 'left') {
+<<<<<<< HEAD
                   // For left, use the first junction at Y=17
                   intersectionX = hX + 0.5; // Adjusted center of left T (-0.023 + 0.5)
                   intersectionY = hY; // Use horizontal line Y (17)
@@ -1057,6 +1124,16 @@
                 } else if (position === 'bottom') {
                   intersectionX = vX; // Use vertical line X
                   intersectionY = hY; // Use horizontal line Y
+=======
+                  intersectionX = hX + 1; // Center of left T (use first junction)
+                  intersectionY = hY; // Use horizontal line Y (17 or 40)
+                } else if (position === 'right') {
+                  intersectionX = hX + 1.5; // Center of right T (use first junction)
+                  intersectionY = hY; // Use horizontal line Y (9 or 31)
+                } else if (position === 'bottom') {
+                  intersectionX = vX; // Use vertical line X (22)
+                  intersectionY = hY; // Use horizontal line Y (46)
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
                 }
               } else if (isStorageContainer) {
                 if (position === 'top') {
@@ -1177,6 +1254,7 @@
                 scaledX += 0.7;
               }
               
+<<<<<<< HEAD
               // Determine Position enum value and handle ID using configuration
               let positionEnum = Position.Top; // Default to Top
               let handleId;
@@ -1212,6 +1290,31 @@
                   position: positionEnum
                 });
               }
+=======
+              // Determine Position enum value and handle index
+              let positionEnum;
+              let handleIndex;
+              if (position === 'top') {
+                positionEnum = Position.Top;
+                handleIndex = 0;
+              } else if (position === 'right') {
+                positionEnum = Position.Right;
+                handleIndex = 1;
+              } else if (position === 'bottom') {
+                positionEnum = Position.Bottom;
+                handleIndex = 2;
+              } else if (position === 'left') {
+                positionEnum = Position.Left;
+                handleIndex = 3;
+              }
+              
+              junctionPoints.push({
+                x: scaledX,
+                y: scaledY,
+                id: `handle-${handleIndex}`,
+                position: positionEnum
+              });
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
               
               console.log(`[PIDSymbolNode ${id}] ${position} handle at:`, {
                 position,
@@ -1224,12 +1327,60 @@
           }
         });
         
+<<<<<<< HEAD
         // Note: Additional junctions are now handled directly in the main loop for vessel full tube coil
         // This ensures consistent and stable handler behavior like tank general basin
+=======
+        // Process additional junctions for vessels with multiple connection points
+        if (additionalJunctions && additionalJunctions.length > 0) {
+          additionalJunctions.forEach(addJunction => {
+            if (addJunction.h && addJunction.v) {
+              const hTransform = addJunction.h.transform;
+              const vTransform = addJunction.v.transform;
+              
+              // Parse transforms to get coordinates
+              const hMatch = hTransform.match(/translate\(([^)]+)\)/);
+              const vMatch = vTransform.match(/translate\(([^)]+)\)/);
+              
+              if (hMatch && vMatch) {
+                const [hX, hY] = hMatch[1].split(/[\s,]+/).map(parseFloat);
+                const [vX, vY] = vMatch[1].split(/[\s,]+/).map(parseFloat);
+                
+                let intersectionX, intersectionY;
+                
+                if (addJunction.position === 'right2') {
+                  intersectionX = hX + 1.5; // Center of right T
+                  intersectionY = hY; // Use horizontal line Y (31)
+                } else if (addJunction.position === 'left2') {
+                  intersectionX = hX + 1; // Center of left T
+                  intersectionY = hY; // Use horizontal line Y (40)
+                }
+                
+                // Apply main group offset
+                const absoluteX = mainGroupOffsetX + intersectionX;
+                const absoluteY = mainGroupOffsetY + intersectionY;
+                
+                // Scale to actual symbol size
+                const scaledX = absoluteX * scaleX;
+                const scaledY = absoluteY * scaleY;
+                
+                junctionPoints.push({
+                  x: scaledX,
+                  y: scaledY,
+                  id: `handle-${junctionPoints.length}`,
+                  position: addJunction.position.includes('right') ? Position.Right : Position.Left,
+                  edgeDistance: 4
+                });
+              }
+            }
+          });
+        }
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
         
         // Use all detected T-junction points
         if (junctionPoints.length > 0) {
           connectionPoints = junctionPoints;
+<<<<<<< HEAD
           console.log(`Using ${junctionPoints.length} T-junctions for ${id}`, junctionPoints.map(p => ({
             id: p.id,
             x: p.x.toFixed(2),
@@ -1249,6 +1400,9 @@
             }, 100);
             activeTimeouts.add(timeoutId);
           }
+=======
+          console.log(`Using ${junctionPoints.length} T-junctions for ${id}`);
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
         } else {
           console.log('No T-junctions found, using fallback');
           connectionPoints = []; // Will trigger fallback handles
@@ -1431,6 +1585,7 @@
   $: sourceHandlesEnabled = !isConnecting || isThisNodeConnecting;
   $: targetHandlesEnabled = !isConnecting || isOtherNodeConnecting;
   
+<<<<<<< HEAD
   // Debug mode for visualizing handle areas (toggle via console: window.debugHandles())
   let debugHandles = false;
   if (typeof window !== 'undefined') {
@@ -1443,6 +1598,8 @@
     };
   }
   
+=======
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   // Cleanup on component destroy
   onDestroy(() => {
     // Remove event listeners
@@ -1506,6 +1663,7 @@
     {#each connectionPoints as point, index}
       <!-- Use position from point if available, otherwise calculate it -->
       {@const handlePosition = point.position || getHandlePosition(point)}
+<<<<<<< HEAD
       {@const debugInfo = `Handle ${point.id}: pos=${handlePosition}, x=${(point.x / data.width * 100).toFixed(1)}%, y=${(point.y / data.height * 100).toFixed(1)}%`}
       
       <!-- Single bidirectional handle at T-junction -->
@@ -1518,6 +1676,27 @@
         class="connection-handle"
         isConnectable={HANDLE_CONFIG.isConnectable}
         data-debug={debugInfo}
+=======
+      
+      <!-- Source handle at T-junction -->
+      <Handle
+        type="source"
+        position={handlePosition}
+        id={point.id}
+        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%; transform: translate(-50%, -50%);"
+        class="connection-handle connection-handle-source"
+        isConnectable={sourceHandlesEnabled}
+      />
+      
+      <!-- Target handle at T-junction (overlapping) -->
+      <Handle
+        type="target"
+        position={handlePosition}
+        id={point.id}
+        style="left: {(point.x / data.width) * 100}%; top: {(point.y / data.height) * 100}%; transform: translate(-50%, -50%);"
+        class="connection-handle connection-handle-target"
+        isConnectable={targetHandlesEnabled}
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
       />
     {/each}
   {/if}
@@ -1526,38 +1705,98 @@
   {#if initialDetectionComplete && connectionPoints.length === 0 && $handleVisibility}
     <!-- Top Handle -->
     <Handle
+<<<<<<< HEAD
       type={HANDLE_CONFIG.type}
       position={Position.Top}
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.top)}
       style="left: 50%; top: 0%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
+=======
+      type="source"
+      position={Position.Top}
+      id="handle-0"
+      style="left: 50%; top: 0%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Top}
+      id="handle-0"
+      style="left: 50%; top: 0%;"
+      isConnectable={targetHandlesEnabled}
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     />
     
     <!-- Right Handle -->
     <Handle
+<<<<<<< HEAD
       type={HANDLE_CONFIG.type}
       position={Position.Right}
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.right)}
       style="left: 100%; top: 50%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
+=======
+      type="source"
+      position={Position.Right}
+      id="handle-1"
+      style="left: 100%; top: 50%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Right}
+      id="handle-1"
+      style="left: 100%; top: 50%;"
+      isConnectable={targetHandlesEnabled}
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     />
     
     <!-- Bottom Handle -->
     <Handle
+<<<<<<< HEAD
       type={HANDLE_CONFIG.type}
       position={Position.Bottom}
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.bottom)}
       style="left: 50%; top: 100%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
+=======
+      type="source"
+      position={Position.Bottom}
+      id="handle-2"
+      style="left: 50%; top: 100%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Bottom}
+      id="handle-2"
+      style="left: 50%; top: 100%;"
+      isConnectable={targetHandlesEnabled}
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     />
     
     <!-- Left Handle -->
     <Handle
+<<<<<<< HEAD
       type={HANDLE_CONFIG.type}
       position={Position.Left}
       id={generateHandleId(HANDLE_CONFIG.idFormat.standardPositions.left)}
       style="left: 0%; top: 50%;"
       isConnectable={HANDLE_CONFIG.isConnectable}
+=======
+      type="source"
+      position={Position.Left}
+      id="handle-3"
+      style="left: 0%; top: 50%;"
+      isConnectable={sourceHandlesEnabled}
+    />
+    <Handle
+      type="target"
+      position={Position.Left}
+      id="handle-3"
+      style="left: 0%; top: 50%;"
+      isConnectable={targetHandlesEnabled}
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     />
   {/if}
   
@@ -1744,15 +1983,24 @@
   /* Connection handles - visible square handles */
   :global(.connection-handle) {
     /* Visible handle for connection */
+<<<<<<< HEAD
     width: 10px !important;
     height: 10px !important;
     background: #ff0000 !important;
     border: 1px solid #ffffff !important;
     border-radius: 2px !important;
+=======
+    width: 8px !important;
+    height: 8px !important;
+    background: #ff0000 !important;
+    border: none !important;
+    border-radius: 0% !important;
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     overflow: visible !important;
     cursor: crosshair;
     pointer-events: all;
     z-index: 100 !important;
+<<<<<<< HEAD
     transition: all 0.2s ease;
   }
   
@@ -1762,12 +2010,23 @@
     position: absolute;
     width: 28px;
     height: 28px;
+=======
+  }
+  
+  /* Create larger hit area using ::before pseudo-element */
+  :global(.connection-handle::before) {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     background: transparent;
     pointer-events: all;
     cursor: crosshair;
+<<<<<<< HEAD
     /* Debug: uncomment to see hit areas */
     /* background: rgba(0, 255, 0, 0.1); */
   }
@@ -1779,6 +2038,11 @@
     box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
   }
   
+=======
+  }
+  
+  /* Show a subtle circle on hover for visual feedback */
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   :global(.connection-handle:hover::before) {
     opacity: 0.4 !important;
     background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, rgba(59, 130, 246, 0.2) 50%, transparent 70%) !important;
@@ -1803,6 +2067,7 @@
     background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%) !important;
   }
   
+<<<<<<< HEAD
   /* Ensure proper layering and interaction priority */
   :global(.connection-handle-source) {
     position: absolute;
@@ -1821,6 +2086,13 @@
   
   :global(.connecting .connection-handle-source) {
     z-index: 99 !important;
+=======
+  /* Ensure both source and target handles overlap perfectly and are below edges */
+  :global(.connection-handle-source),
+  :global(.connection-handle-target) {
+    position: absolute;
+    z-index: 100 !important; /* Below edges (which are z-index 9999) */
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   }
   
   /* Make valid connection targets more prominent during dragging */
@@ -1831,6 +2103,7 @@
     height: 24px !important;
   }
   
+<<<<<<< HEAD
   /* Debug mode - visualize handle areas when enabled */
   :global(body.debug-pid-handles .connection-handle::before) {
     background: rgba(0, 255, 0, 0.2) !important;
@@ -1848,6 +2121,13 @@
   
   :global(body.debug-pid-handles .connection-handle-target) {
     background: rgba(0, 0, 255, 0.5) !important;
+=======
+  /* Debug mode - visualize handle areas */
+  :global(.debug-handle) {
+    opacity: 0.3 !important;
+    background: rgba(255, 0, 0, 0.2) !important;
+    border: 1px dashed red !important;
+>>>>>>> d676d35c816624a0145c5a7d46c52bfc32f42517
   }
   
   /* Debug T-shape center marker */
